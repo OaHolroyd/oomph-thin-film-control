@@ -10,19 +10,27 @@ if (GPVAL_ERRNO) {
 set term pngcairo size 600,600
 set yrange [0.9:1.1];
 
-do for [i=1:10] {
+do for [i=1:500] {
   fin = sprintf("output/%s_interface_%d.dat", mode, i)
-  fout = sprintf("plot/interface_%d.png",i)
-  set output fout
-  plot fin using 1:2 w l
+
+  stats fin nooutput
+  if (!GPVAL_ERRNO) {
+    fout = sprintf("output/interface_%d.png",i)
+    set output fout
+    plot fin using 1:2 w l
+  }
 }
 set output
 
 # plot animation
 set term gif size 600,600 animate delay 12 loop 0 optimize
-set output "plot/interface.gif"
-do for [i=1:10] {
+set output "output/interface.gif"
+do for [i=1:500] {
   fin = sprintf("output/%s_interface_%d.dat", mode, i)
-  plot fin using 1:2 w l
+
+  stats fin nooutput
+  if (!GPVAL_ERRNO) {
+    plot fin using 1:2 w l
+  }
 }
 set output
