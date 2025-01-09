@@ -707,12 +707,12 @@ int main(int argc, char **argv) {
   Wall_normal[1] = 0.0;
 
   // Create the problem (either using the spine or elastic formulation)
-  SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(30, 4, Length);
-  // ElasticInclinedPlaneProblem<PseudoSolidNodeUpdateElement<FLUID_ELEMENT, QPVDElement<2, 3> >, BDF<2> > problem(
-  //   30,
-  //   4,
-  //   Length
-  // );
+  // SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(30, 4, Length);
+  ElasticInclinedPlaneProblem<PseudoSolidNodeUpdateElement<FLUID_ELEMENT, QPVDElement<2, 3> >, BDF<2> > problem(
+    30,
+    4,
+    Length
+  );
 
   // Solve the steady problem
   problem.solve_steady();
