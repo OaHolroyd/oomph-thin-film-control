@@ -2,6 +2,8 @@
 *.DS_Store
 main
 *.dat
+*.png
+*.gif
 
 # Prerequisites
 *.d

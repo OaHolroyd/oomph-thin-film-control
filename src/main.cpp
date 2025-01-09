@@ -439,7 +439,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(const double &dt
     if (counter == 2) {
       std::ofstream file;
       std::ostringstream filename;
-      filename << Output_prefix << "_step" << Re << "_" << t << ".dat";
+      filename << Output_prefix << "_step_" << t << ".dat";
       file.open(filename.str().c_str());
       Bulk_mesh_pt->output(file, 5);
       file.close();
@@ -451,7 +451,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(const double &dt
     {
       std::ofstream file;
       std::ostringstream filename;
-      filename << Output_prefix << "_interface_" << Re << "_" << t << ".dat";
+      filename << Output_prefix << "_interface_" << t << ".dat";
       file.open(filename.str().c_str());
       Surface_mesh_pt->output(file, 5);
       file.close();
