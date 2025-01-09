@@ -32,6 +32,7 @@
 
 //Standard C++ library includes
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -145,7 +146,20 @@ protected:
 
 public:
   /// Generic Constructor (empty)
-  InclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length) : Output_prefix("Unset") {
+  InclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length) : Output_prefix("Unset") {  }
+
+  /// Set the output prefix
+  void set_output_prefix(const std::string &prefix) {
+    // Set up the output directory (always delete the old one)
+    std::filesystem::path out_dir = std::filesystem::path("output");
+    if (std::filesystem::exists(out_dir)) {
+      // delete the directory
+      std::filesystem::remove_all(out_dir);
+    }
+    std::filesystem::create_directory(out_dir);
+
+    // Open an output file
+    this->Output_prefix = out_dir.c_str() + std::string("/") + prefix;
   }
 
   /// Solve the steady problem
@@ -390,15 +404,14 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::solve_steady() {
 //----------------------------------------------------------------------
 template<class ELEMENT, class INTERFACE_ELEMENT>
 void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(const double &dt, const unsigned &n_tsteps) {
-  //Need to use the Global variables here
+  // Need to use the Global variables here
   using namespace Global_Physical_Variables;
 
-  //Open an output file
   std::string filename = Output_prefix;
   filename.append("_time_trace.dat");
   ofstream trace(filename.c_str());
-  //Counter that will be used to output the full flowfield
-  //at certain timesteps
+  // Counter that will be used to output the full flowfield
+  // at certain timesteps
   int counter = 0;
 
   //Initial output of the time and the value of the vertical position at the
@@ -426,7 +439,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(const double &dt
     if (counter == 2) {
       std::ofstream file;
       std::ostringstream filename;
-      filename << Output_prefix << "_step" << Re << "_" << t << ".dat";
+      filename << Output_prefix << "_step_" << t << ".dat";
       file.open(filename.str().c_str());
       Bulk_mesh_pt->output(file, 5);
       file.close();
@@ -438,7 +451,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(const double &dt
     {
       std::ofstream file;
       std::ostringstream filename;
-      filename << Output_prefix << "_interface_" << Re << "_" << t << ".dat";
+      filename << Output_prefix << "_interface_" << t << ".dat";
       file.open(filename.str().c_str());
       Surface_mesh_pt->output(file, 5);
       file.close();
@@ -547,7 +560,7 @@ public:
   SpineInclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length): InclinedPlaneProblem<
     ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> >(nx, ny, length) {
     //Set the name
-    this->Output_prefix = "spine";
+    this->set_output_prefix("spine");
 
     //Create our one and only timestepper, with adaptive timestepping
     this->add_time_stepper_pt(new TIMESTEPPER);
@@ -616,7 +629,7 @@ public:
   ElasticInclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length) : InclinedPlaneProblem<
     ELEMENT, ElasticLineFluidInterfaceElement<ELEMENT> >(nx, ny, length) {
     // Set the name
-    this->Output_prefix = "elastic";
+    this->set_output_prefix("elastic");
 
     // Create our one and only timestepper, with adaptive timestepping
     this->add_time_stepper_pt(new TIMESTEPPER);
@@ -693,11 +706,12 @@ int main(int argc, char **argv) {
   Wall_normal[0] = -1.0;
   Wall_normal[1] = 0.0;
 
-  // Create the problem
+  // Create the problem (either using the spine or elastic formulation)
+  // SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(30, 4, Length);
   ElasticInclinedPlaneProblem<PseudoSolidNodeUpdateElement<FLUID_ELEMENT, QPVDElement<2, 3> >, BDF<2> > problem(
     30,
     4,
-    Global_Physical_Variables::Length
+    Length
   );
 
   // Solve the steady problem
@@ -709,5 +723,5 @@ int main(int argc, char **argv) {
   problem.assign_initial_values_impulsive(dt);
 
   //Timestep it
-  problem.timestep(dt, 2);
+  problem.timestep(dt, 10);
 }

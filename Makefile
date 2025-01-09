@@ -7,7 +7,7 @@ LD=$(CC)
 
 # flags (this assumes that the environment variable OOMPHLIB contains the root directory of the oomph-lib library)
 WARNINGS=-Wall -Wextra -pedantic -Wno-implicit-function-declaration
-CFLAGS=-O3 -Wall -std=c++11 -DgFortran
+CFLAGS=-O3 -Wall -std=c++17 -DgFortran
 LDFLAGS=$(CFLAGS)
 LDLIBS=-L$(OOMPHLIB)/build/lib $(OOMPHLIB)/build/lib/*.a \
        -L/opt/homebrew/Cellar/gcc/14.2.0_1/lib/gcc/current/gcc/aarch64-apple-darwin23/14 \
@@ -25,6 +25,7 @@ EXE=main
 # directories
 SRC_DIR=./src
 OBJ_DIR=./obj
+OUT_DIR=./output
 
 # files
 SRC=$(wildcard $(SRC_DIR)/*.cpp)
@@ -52,7 +53,7 @@ $(OBJ_DIR):
 # remove build files and executable
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(EXE) *.dat
+	rm -rf $(OBJ_DIR) $(EXE) $(OUT_DIR)
 
 .PHONY: all
 all: $(EXE)
