@@ -53,7 +53,7 @@ $(OBJ_DIR):
 # remove build files and executable
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(EXE) $(OUT_DIR)
+	rm -rf $(OBJ_DIR) $(EXE) $(OUT_DIR)/*.dat $(OUT_DIR)/*.png $(OUT_DIR)/*.gif
 
 .PHONY: all
 all: $(EXE)
