@@ -38,7 +38,6 @@
 #include "generic.h"
 
 // Project-specific includes
-#include "ElasticInclinedPlaneProblem.h"
 #include "SpineInclinedPlaneProblem.h"
 
 using namespace std;
@@ -76,27 +75,6 @@ int main(int argc, char **argv) {
   {
     // Create the problem
     SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(30, 4, Length);
-
-    // Solve the steady problem
-    problem.solve_steady();
-
-    // Prepare the problem for timestepping
-    // (assume that it's been at the flat-film solution for all previous time)
-    double dt = 0.1;
-    problem.assign_initial_values_impulsive(dt);
-
-    //Timestep it
-    problem.timestep(dt, 50, 10, 10);
-  }
-
-  // ...and once using Elastic formulation
-  {
-    // Create the problem
-    ElasticInclinedPlaneProblem<PseudoSolidNodeUpdateElement<FLUID_ELEMENT, QPVDElement<2, 3> >, BDF<2> > problem(
-      30,
-      4,
-      Length
-    );
 
     // Solve the steady problem
     problem.solve_steady();
