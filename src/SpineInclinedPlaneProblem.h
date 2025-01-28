@@ -5,7 +5,7 @@
 #ifndef SPINEINCLINEDPLANEPROBLEM_H
 #define SPINEINCLINEDPLANEPROBLEM_H
 
-#include "meshes/simple_rectangular_quadmesh.h"
+#include "meshes/rectangular_quadmesh.h"
 
 #include "InclinedPlaneProblem.h"
 
@@ -13,15 +13,15 @@
 /// Create a spine mesh for the problem
 //======================================================================
 template<class ELEMENT>
-class SpineInclinedPlaneMesh : public SimpleRectangularQuadMesh<ELEMENT>, public SpineMesh {
+class SpineInclinedPlaneMesh : public RectangularQuadMesh<ELEMENT>, public SpineMesh {
 public:
   SpineInclinedPlaneMesh(
     const unsigned &nx, const unsigned &ny, const double &lx, const double &ly, TimeStepper *time_stepper_pt
-  ) : SimpleRectangularQuadMesh<ELEMENT>(nx, ny, lx, ly, time_stepper_pt), SpineMesh() {
+  ) : RectangularQuadMesh<ELEMENT>(nx, ny, lx, ly, true, time_stepper_pt), SpineMesh() {
     //Find the number of linear points in the element
     unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
     //Reserve storage for the number of spines
-    Spine_pt.reserve((n_p - 1) * nx + 1);
+    Spine_pt.reserve((n_p - 1) * nx + 1); // TODO: can we remove 1 because th s;ine at the start and end are the same?
 
     //Create single pointer to a spine
     Spine *new_spine_pt = 0;
@@ -101,16 +101,12 @@ public:
     //Create the bulk mesh
     this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, length, 1.0, this->time_stepper_pt());
 
-    //Create the traction elements
-    this->make_traction_elements();
     //Create the free surface elements
     this->make_free_surface_elements();
 
     //Add all sub meshes to the problem
     this->add_sub_mesh(this->Bulk_mesh_pt);
-    this->add_sub_mesh(this->Traction_mesh_pt);
     this->add_sub_mesh(this->Surface_mesh_pt);
-    this->add_sub_mesh(this->Point_mesh_pt);
     //Create the global mesh
     this->build_global_mesh();
 

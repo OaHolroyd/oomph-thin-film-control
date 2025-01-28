@@ -1,17 +1,10 @@
-# get spine or elastic
-stats "output/spine_output.dat" nooutput
-if (GPVAL_ERRNO) {
-  mode = "elastic"
-} else {
-  mode = "spine"
-}
-
 # plot individual frames
 set term pngcairo size 600,600
-set yrange [0.9:1.1];
+set yrange [0.0:2.0];
+set xrange [0.0:20.0];
 
-do for [i=1:500] {
-  fin = sprintf("output/%s_interface_%d.dat", mode, i)
+do for [i=0:13000] {
+  fin = sprintf("output/spine_interface_%d.dat", i)
 
   stats fin nooutput
   if (!GPVAL_ERRNO) {
@@ -25,8 +18,8 @@ set output
 # plot animation
 set term gif size 600,600 animate delay 12 loop 0 optimize
 set output "output/interface.gif"
-do for [i=1:500] {
-  fin = sprintf("output/%s_interface_%d.dat", mode, i)
+do for [i=0:13000] {
+  fin = sprintf("output/spine_interface_%d.dat", i)
 
   stats fin nooutput
   if (!GPVAL_ERRNO) {
