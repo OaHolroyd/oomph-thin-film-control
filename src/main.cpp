@@ -62,19 +62,19 @@ int main(int argc, char **argv) {
   // Run once using Spine formulation...
   {
     // Create the problem
-    SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(80, 4, Length);
+    SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(250, 10, Length);
 
     // Solve the steady problem
     problem.solve_steady();
 
     // Prepare the problem for timestepping
     // (assume that it's been at the flat-film solution for all previous time)
-    double tend = 120.0;
+    double tend = 200.0;
     double dt = 0.1;
     problem.assign_initial_values_impulsive(dt);
     int n_tsteps = static_cast<int>(tend / dt);
 
     //Timestep it
-    problem.timestep(dt, n_tsteps, 10, 10);
+    problem.timestep(dt, n_tsteps, 20, 20);
   }
 }

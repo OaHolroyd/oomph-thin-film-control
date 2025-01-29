@@ -173,10 +173,12 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::solve_steady() {
       double x = Bulk_mesh_pt->node_pt(n)->x(0);
       double y = Bulk_mesh_pt->node_pt(n)->x(1);
 
-      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + 0.05 * sin(2 * 3.14159265 * x / Length);
+      // perturb the y values
+      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + 0.01 * sin(2.0 * M_PI * (x + 10.0) / Length);
 
-      //Top row
-      Bulk_mesh_pt->node_pt(n)->set_value(0, 0.5 * ReInvFr * sin(Alpha) * (2.0 * y - y * y));
+      // set the velocity
+      Bulk_mesh_pt->node_pt(n)->set_value(0, y * (2.0 - y));
+      Bulk_mesh_pt->node_pt(n)->set_value(1, 0.0);
     }
   }
 } //end of solve_steady

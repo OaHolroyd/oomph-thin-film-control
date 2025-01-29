@@ -1,7 +1,8 @@
 # plot individual frames
-set term pngcairo size 600,600
-set yrange [0.9:1.1];
+set term pngcairo size 1200,400
+set yrange [0.0:2.0];
 set xrange [0:20];
+set size ratio 0.25
 
 do for [i=0:13000] {
   fin = sprintf("output/spine_step_%d.dat", i)
@@ -16,7 +17,7 @@ do for [i=0:13000] {
 set output
 
 # plot animation
-set term gif size 600,600 animate delay 100 loop 0 optimize
+set term gif size 600,200 animate delay 25 loop 0 optimize
 set output "output/mesh.gif"
 do for [i=0:13000] {
   fin = sprintf("output/spine_step_%d.dat", i)

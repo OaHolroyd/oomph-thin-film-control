@@ -26,7 +26,7 @@ namespace Global_Physical_Variables {
   double ReInvFr = 1.0;
 
   /// Angle of incline of the slope (45 degrees)
-  double Alpha = 1.0 * atan(1.0);
+  double Alpha = M_PI / 4.0;
 
   /// The Vector direction of gravity, set in main()
   Vector<double> G(2, 0.0);
