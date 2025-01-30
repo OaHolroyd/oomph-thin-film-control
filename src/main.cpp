@@ -38,7 +38,6 @@
 #include "generic.h"
 
 // Project-specific includes
-#include "ElasticInclinedPlaneProblem.h"
 #include "SpineInclinedPlaneProblem.h"
 
 using namespace std;
@@ -50,63 +49,29 @@ using namespace oomph;
 int main(int argc, char **argv) {
   using namespace Global_Physical_Variables;
 
-  //Set the constitutive law for the mesh deformation
-  Constitutive_law_pt = new GeneralisedHookean(&Nu);
-
 #ifdef CR_ELEMENT
 #define FLUID_ELEMENT QCrouzeixRaviartElement<2>
 #else
 #define FLUID_ELEMENT QTaylorHoodElement<2>
 #endif
 
-  //Initialise physical parameters
-  //Scale Reynolds number to be independent of alpha.
-  Re = 4.0 / sin(Alpha);
+  // Set the direction of gravity
+  // TODO: should be in the Global_Physical_Variables namespace
+  G[0] = 2.0;
+  G[1] = -2.0 / tan(Alpha);
 
-  //Set the direction of gravity
-  G[0] = sin(Alpha);
-  G[1] = -cos(Alpha);
+  // Create the problem
+  SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(100, 6, Length);
 
-  //The wall normal to the inlet is in the negative x direction
-  Wall_normal.resize(2);
-  Wall_normal[0] = -1.0;
-  Wall_normal[1] = 0.0;
+  // Solve the steady problem
+  problem.solve_steady();
 
-  // Run once using Spine formulation...
-  {
-    // Create the problem
-    SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(30, 4, Length);
+  // Prepare the problem for timestepping
+  double tend = 200.0;
+  double dt = 0.1;
+  int n_tsteps = static_cast<int>(tend / dt);
+  problem.assign_initial_values_impulsive(dt);
 
-    // Solve the steady problem
-    problem.solve_steady();
-
-    // Prepare the problem for timestepping
-    // (assume that it's been at the flat-film solution for all previous time)
-    double dt = 0.1;
-    problem.assign_initial_values_impulsive(dt);
-
-    //Timestep it
-    problem.timestep(dt, 50, 10, 10);
-  }
-
-  // ...and once using Elastic formulation
-  {
-    // Create the problem
-    ElasticInclinedPlaneProblem<PseudoSolidNodeUpdateElement<FLUID_ELEMENT, QPVDElement<2, 3> >, BDF<2> > problem(
-      30,
-      4,
-      Length
-    );
-
-    // Solve the steady problem
-    problem.solve_steady();
-
-    // Prepare the problem for timestepping
-    // (assume that it's been at the flat-film solution for all previous time)
-    double dt = 0.1;
-    problem.assign_initial_values_impulsive(dt);
-
-    //Timestep it
-    problem.timestep(dt, 50, 10, 10);
-  }
+  // Timestep it
+  problem.timestep(dt, n_tsteps, 20, 20);
 }
