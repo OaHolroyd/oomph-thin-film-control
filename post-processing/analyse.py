@@ -6,21 +6,17 @@ def shift_hmax_to_zero(x, h):
     # find the index of the largest value of h
     i = np.argmax(h)
     xmax = x[i]
-    x = ((x - xmax) + 20) % 20
+    x = ((x - xmax) + 30) % 30
     return x, h
 
 
-def main():
-    ########### GET OOMPH-LIB DATA ###########
-    dt = 0.1
-    step = 20
+def get_oomphlib_data(output_dir, dt, step):
+    # timeseries of dh
     t = []
     dh = []
-
-    # timeseries of dh
     k = 0
     for i in range(0, 100_000, step):
-        filename = f"output/spine_interface_{i}.dat"
+        filename = f"{output_dir}/spine_interface_{i}.dat"
         try:
             with open(filename) as fp:
                 # dummy data (to be overwritten)
@@ -44,7 +40,7 @@ def main():
     # final interface
     x = []
     h = []
-    filename = f"output/spine_interface_{final_i}.dat"
+    filename = f"{output_dir}/spine_interface_{final_i}.dat"
     with open(filename) as fp:
         # read the info from the file
         for line in fp:
@@ -56,6 +52,15 @@ def main():
     x = np.array(x)
     h = np.array(h)
     x, h = shift_hmax_to_zero(x, h)
+
+    return t, dh, x, h
+
+
+
+def main():
+    ########### GET OOMPH-LIB DATA ###########
+    t, dh, x, h = get_oomphlib_data("output", 0.1, 10)
+    # t250, dh250, x250, h250 = get_oomphlib_data("output-250", 0.1, 20)
 
 
     ########### GET BASILISK DATA ###########
@@ -96,6 +101,7 @@ def main():
     # plot growth
     ax[0].semilogy(t_basilisk, dh_basilisk, label='basilisk')
     ax[0].semilogy(t, dh, label='oomph-lib')
+    # ax[0].semilogy(t250, dh250, linestyle='--', label='oomph-lib (n=250)')
     ax[0].legend()
     ax[0].set_xlabel('t')
     ax[0].set_ylabel('max(h-1)')
@@ -103,47 +109,12 @@ def main():
     # plot interface
     ax[1].scatter(x_basilisk, h_basilisk, label='basilisk')
     ax[1].scatter(x, h, label='oomph-lib')
+    # ax[1].scatter(x250, h250, label='oomph-lib (n=250)')
     ax[1].legend()
     ax[1].set_xlabel('x')
     ax[1].set_ylabel('h')
 
     plt.show()
-
-
-
-    return
-
-    k = 0;
-    for i in range(0, 100_000, 10):
-        filename = f"output/spine_interface_{i}.dat"
-
-        hmax.append(0.0)
-        t.append(i * dt)
-
-        try:
-            with open(filename) as fp:
-                for line in fp:
-                    if len(line) > 20:
-                        # get h from the node
-                        numbers = [float(s) for s in line.rstrip().split(' ')]
-                        hmax[k] = max(hmax[k], abs(numbers[1] - 1.0))
-        except FileNotFoundError:
-            print(f"file {filename} not found")
-            final_i = i
-            hmax.pop()
-            t.pop()
-            break
-
-        k = k + 1
-
-    plt.semilogy(t, hmax, label='oomphlib')
-    plt.semilogy(9999+hmax_basilisk[:, 0], hmax_basilisk[:, 1], label='basilisk')
-    plt.legend()
-    plt.xlabel('t')
-    plt.ylabel('interfacial perturbation')
-    plt.show()
-
-    # also plot the travelling waves
 
 if __name__ == '__main__':
     main()

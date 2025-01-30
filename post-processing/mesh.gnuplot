@@ -1,7 +1,7 @@
 # plot individual frames
 set term pngcairo size 1200,400
 set yrange [0.0:2.0];
-set xrange [0:20];
+# set xrange [0:30];
 set size ratio 0.25
 
 do for [i=0:13000] {

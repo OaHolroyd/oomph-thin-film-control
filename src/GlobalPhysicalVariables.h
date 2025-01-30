@@ -38,7 +38,7 @@ namespace Global_Physical_Variables {
   double K = 1;
 
   /// The length of the domain to fit the desired number of waves
-  double Length = 20;
+  double Length = 30;
 }
 
 #endif //GLOBALPHYSICALVARIABLES_H
