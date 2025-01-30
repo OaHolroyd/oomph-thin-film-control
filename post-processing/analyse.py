@@ -59,8 +59,8 @@ def get_oomphlib_data(output_dir, dt, step):
 
 def main():
     ########### GET OOMPH-LIB DATA ###########
-    t, dh, x, h = get_oomphlib_data("output", 0.1, 10)
-    # t250, dh250, x250, h250 = get_oomphlib_data("output-250", 0.1, 20)
+    t, dh, x, h = get_oomphlib_data("output", 0.1, 20)
+    t250, dh250, x250, h250 = get_oomphlib_data("output-250", 0.05, 20)
 
 
     ########### GET BASILISK DATA ###########
@@ -99,17 +99,17 @@ def main():
     fig, ax = plt.subplots(1, 2)
 
     # plot growth
-    ax[0].semilogy(t_basilisk, dh_basilisk, label='basilisk')
-    ax[0].semilogy(t, dh, label='oomph-lib')
-    # ax[0].semilogy(t250, dh250, linestyle='--', label='oomph-lib (n=250)')
+    ax[0].semilogy(t_basilisk, dh_basilisk, label='basilisk (n=35008)')
+    ax[0].semilogy(t, dh, label='oomph-lib (n=100 x 6)')
+    ax[0].semilogy(t250, dh250, linestyle='--', label='oomph-lib (n=250 x 10)')
     ax[0].legend()
     ax[0].set_xlabel('t')
     ax[0].set_ylabel('max(h-1)')
 
     # plot interface
-    ax[1].scatter(x_basilisk, h_basilisk, label='basilisk')
-    ax[1].scatter(x, h, label='oomph-lib')
-    # ax[1].scatter(x250, h250, label='oomph-lib (n=250)')
+    ax[1].scatter(x_basilisk, h_basilisk, label='basilisk (n=35008)')
+    ax[1].scatter(x, h, label='oomph-lib (n=100 x 6)')
+    ax[1].scatter(x250, h250, label='oomph-lib (n=250 x 10)')
     ax[1].legend()
     ax[1].set_xlabel('x')
     ax[1].set_ylabel('h')

@@ -55,26 +55,23 @@ int main(int argc, char **argv) {
 #define FLUID_ELEMENT QTaylorHoodElement<2>
 #endif
 
-  //Set the direction of gravity
+  // Set the direction of gravity
+  // TODO: should be in the Global_Physical_Variables namespace
   G[0] = 2.0;
   G[1] = -2.0 / tan(Alpha);
 
-  // Run once using Spine formulation...
-  {
-    // Create the problem
-    SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(100, 8, Length);
+  // Create the problem
+  SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(100, 6, Length);
 
-    // Solve the steady problem
-    problem.solve_steady();
+  // Solve the steady problem
+  problem.solve_steady();
 
-    // Prepare the problem for timestepping
-    // (assume that it's been at the flat-film solution for all previous time)
-    double tend = 400.0;
-    double dt = 0.1;
-    problem.assign_initial_values_impulsive(dt);
-    int n_tsteps = static_cast<int>(tend / dt);
+  // Prepare the problem for timestepping
+  double tend = 200.0;
+  double dt = 0.1;
+  int n_tsteps = static_cast<int>(tend / dt);
+  problem.assign_initial_values_impulsive(dt);
 
-    //Timestep it
-    problem.timestep(dt, n_tsteps, 10, 10);
-  }
+  // Timestep it
+  problem.timestep(dt, n_tsteps, 20, 20);
 }
