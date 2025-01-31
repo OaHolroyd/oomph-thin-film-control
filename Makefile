@@ -15,8 +15,8 @@ LDLIBS=-L$(OOMPHLIB)/build/lib $(OOMPHLIB)/build/lib/*.a \
        -L/opt/homebrew/Cellar/gcc/14.2.0_1/lib/gcc/current/gcc/aarch64-apple-darwin23/14 \
        -L/opt/homebrew/Cellar/gcc/14.2.0_1/lib/gcc/current \
        -lemutls_w -lheapt_w -lgfortran -lquadmath -lm -llapacke -L/opt/homebrew/opt/lapack/lib
-INCLUDES=-I$(OOMPHLIB)/build/include \
-         -I$(OOMPHLIB) \
+INCLUDES=-isystem $(OOMPHLIB)/build/include \
+         -isystem $(OOMPHLIB) \
          -I/opt/homebrew/opt/lapack/include
 OLFLAGS=-DHAVE_CONFIG_H -DOOMPH_HAS_STACKTRACE -DOOMPH_HAS_UNISTDH \
         -DOOMPH_HAS_TRIANGLE_LIB -DOOMPH_HAS_TETGEN_LIB -DUSING_OOMPH_SUPERLU \

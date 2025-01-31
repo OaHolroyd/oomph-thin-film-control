@@ -98,19 +98,14 @@ void dlyap(double **A, double **Q, int n, int transpose) {
     } // j end
   } // i end
 
-  // fprintf(stderr, "Z\n  %15lf %15lf\n  %15lf %15lf\n", Z[0][0], Z[0][1], Z[1][0], Z[1][1]);
-  // fprintf(stderr, "Q\n  %15lf %15lf\n  %15lf %15lf\n", Q[0][0], Q[0][1], Q[1][0], Q[1][1]);
-  // ABORT("expected");
-
   /* solve Schur version */
   double s;
   if (transpose == 0) {
     /* AY + YA' = Q */
-    double scale = LAPACKE_dtrsyl(LAPACK_ROW_MAJOR, 'N', 'T', 1, n, n, *A, n, *A, n, *Q, n, &s);
+    LAPACKE_dtrsyl(LAPACK_ROW_MAJOR, 'N', 'T', 1, n, n, *A, n, *A, n, *Q, n, &s);
   } else {
     /* A'Y + YA = Q */
-    double scale = LAPACKE_dtrsyl(LAPACK_ROW_MAJOR, 'T', 'N', 1, n, n, *A, n, *A, n, *Q, n, &s);
-    // fprintf(stderr, "scale: %lf\n", scale);
+    LAPACKE_dtrsyl(LAPACK_ROW_MAJOR, 'T', 'N', 1, n, n, *A, n, *A, n, *Q, n, &s);
   }
 
   s = 1/s;

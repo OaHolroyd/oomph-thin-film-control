@@ -60,18 +60,23 @@ int main(int argc, char **argv) {
   G[0] = 2.0;
   G[1] = -2.0 / tan(Alpha);
 
-  // Create the problem
-  SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(100, 6, Length);
+  // Create the control problem
+  unsigned nx = 100;
+  unsigned ny = 6;
+  int n_control = 100;
+  int m_control = 7;
+  int p_control = 1;
+  SpineControlledFilmProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(nx, ny, n_control, m_control, p_control);
 
   // Step up to the start of the controls
-  problem.solve_steady();
+  problem.initial_condition(1, 0.01);
   double tburn = 100.0;
   double dtburn = 0.1;
   problem.assign_initial_values_impulsive(dtburn);
-  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 100, 100, 0);
+  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 10, 0);
 
   // Step with controls turned on
   double tcontrol = 50.0;
   double dt = 0.1;
-  problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 10, 1);
+  problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
 }

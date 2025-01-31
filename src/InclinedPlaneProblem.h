@@ -31,7 +31,7 @@ using namespace oomph;
 /// Templated by the bulk element and interface element types
 //====================================================================
 template<class ELEMENT, class INTERFACE_ELEMENT>
-class InclinedPlaneProblem : public Problem {
+class ControlledFilmProblem : public Problem {
 protected:
   /// Bulk fluid mesh
   Mesh *Bulk_mesh_pt;
@@ -42,14 +42,38 @@ protected:
   /// Prefix for output files
   std::string Output_prefix;
 
-public:
-  /// Generic Constructor (empty)
-  InclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length) : Output_prefix("Unset") {
-    this->Shut_up_in_newton_solve = true; // don't print loads of solver details
-  }
+  /// Storage of the interface/flux at regular intervals
+  double *h, *q;
 
-  /// Set the output prefix
-  void set_output_prefix(const std::string &prefix) {
+  /// Information for the control system
+  int n_control; // dimension of the control system
+  int m_control; // number of actuators
+  int p_control; // number of observers
+
+  /// fill the h ad q arrays with the current values
+  void set_hq();
+
+  /// output 1D information
+  void output_1d();
+
+  /// output 2D information
+  void output_2d();
+
+public:
+  /// record time, number of time steps, and number of output steps
+  double time;
+  int step;
+  int out_step;
+
+
+  /**
+   * Constructor for the controlled film problem
+   *
+   * @param n_control the dimension of the control system
+   * @param m_control the number of actuators
+   * @param p_control the number of observers
+   */
+  ControlledFilmProblem(const int &n_control, const int &m_control, const int &p_control = 0) {
     // Set up the output directory (always delete the old one)
     std::filesystem::path out_dir = std::filesystem::path("output");
     if (std::filesystem::exists(out_dir)) {
@@ -58,40 +82,47 @@ public:
     }
     std::filesystem::create_directory(out_dir);
 
-    // Open an output file
-    this->Output_prefix = out_dir.c_str() + std::string("/") + prefix;
+    // Ensure we use the directory as a prefix
+    this->Output_prefix = out_dir.c_str() + std::string("/");
+
+    // don't print loads of solver details
+    // TODO: figure out how to hide them all properly
+    this->Shut_up_in_newton_solve = true;
+
+    // set control details
+    this->n_control = n_control;
+    this->m_control = m_control;
+    this->p_control = p_control;
+
+    this->h = new double[n_control];
+    this->q = new double[n_control];
+
+    // mesh details
   }
 
-  /// Solve the steady problem
-  void solve_steady();
+  /**
+   * Set the initial condition for the problem
+   *
+   * @param K the wavenumber of the initial condition
+   * @param delta the amplitude of the initial condition
+   */
+  void initial_condition(int K = 1, double delta = 0.01);
 
-  /// Take n_tsteps timesteps of size dt
+  /**
+   * Take a timestep of size dt for n_tsteps
+   *
+   * @param dt the size of the timestep
+   * @param nsteps the number of timesteps to take
+   * @param out_step the number of timesteps between outputs
+   * @param control_strategy the control strategy to use (0 for none)
+   */
   void timestep(
-    const double &dt, const unsigned &n_tsteps, int full_out_step = 2, int interface_out_step = 1,
-    int control_strategy = 0
+    const double &dt, const unsigned &nsteps, int out_step = 1, int control_strategy = 0
   );
-
-  // /// Actions before the timestep
-  // /// (update the time-dependent boundary conditions)
-  // void actions_before_implicit_timestep() {
-  //   //Read out the current time
-  //   double time = this->time_pt()->time();
-  //   //Now add a temporary sinusoidal suction and blowing to the base
-  //   //Amplitude of the perturbation
-  //   double epsilon = 0.01;
-  //   //Loop over the nodes on the base
-  //   unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
-  //   for (unsigned n = 0; n < n_node; n++) {
-  //     Node *nod_pt = this->Bulk_mesh_pt->boundary_node_pt(0, n);
-  //     double arg = Global_Physical_Variables::K * nod_pt->x(0);
-  //     double value = sin(arg) * epsilon * time * exp(-time);
-  //     nod_pt->set_value(1, value);
-  //   }
-  // } //end_of_actions_before_implicit_timestep
 
   //Make the free surface elements on the top surface
   void make_free_surface_elements() {
-    //Create the (empty) meshes
+    // Create the (empty) meshes
     Surface_mesh_pt = new Mesh;
 
     //The free surface is on the boundary 2
@@ -115,10 +146,10 @@ public:
   void complete_build() {
     using namespace Global_Physical_Variables;
 
-    //Complete the build of the fluid elements by passing physical parameters
-    //Find the number of bulk elements
+    // Complete the build of the fluid elements by passing physical parameters
+    // Find the number of bulk elements
     unsigned n_element = Bulk_mesh_pt->nelement();
-    //Loop over all the fluid elements
+    // Loop over all the fluid elements
     for (unsigned e = 0; e < n_element; e++) {
       //Cast to a fluid element
       ELEMENT *temp_pt = dynamic_cast<ELEMENT *>(Bulk_mesh_pt->element_pt(e));
@@ -149,7 +180,7 @@ public:
   } //end of complete_build
 
   /// Generic desructor to clean up the memory allocated in the problem
-  ~InclinedPlaneProblem() {
+  ~ControlledFilmProblem() {
     //Clear node storage and then delete mesh
     this->Surface_mesh_pt->flush_node_storage();
     delete this->Surface_mesh_pt;
@@ -157,17 +188,22 @@ public:
     delete this->Bulk_mesh_pt;
     //Delete the time stepper
     delete this->time_stepper_pt();
+
+    delete[] this->h;
+    delete[] this->q;
   }
 };
 
 
-//-------------------------------------------------------------------------
-/// Solve the steady problem
-//-------------------------------------------------------------------------
 template<class ELEMENT, class INTERFACE_ELEMENT>
-void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::solve_steady() {
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int K, double delta) {
   //Load the namespace
   using namespace Global_Physical_Variables;
+
+  // start at t = 0
+  time = 0.0;
+  step = 0;
+  out_step = 0;
 
   //Initially set all nodes to the Nusselt flat-film solution
   {
@@ -176,112 +212,141 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::solve_steady() {
       double x = Bulk_mesh_pt->node_pt(n)->x(0);
       double y = Bulk_mesh_pt->node_pt(n)->x(1);
 
-      // perturb the y values
-      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + 0.01 * sin(2.0 * M_PI * (x + 10.0) / Length);
+      // perturb the y values using the wavenumber and amplitude specified
+      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + delta * sin(K * 2.0 * M_PI * (x + 10.0) / Length);
 
-      // set the velocity
+      // set the velocity to the Nusselt flat-film solution
       Bulk_mesh_pt->node_pt(n)->set_value(0, y * (2.0 - y));
       Bulk_mesh_pt->node_pt(n)->set_value(1, 0.0);
     }
   }
-} //end of solve_steady
+} //end of initial_condition
 
 
-//----------------------------------------------------------------------
-/// Perform n_tsteps timesteps of size dt
-//----------------------------------------------------------------------
 template<class ELEMENT, class INTERFACE_ELEMENT>
-void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
-  const double &dt, const unsigned &n_tsteps, int full_out_step, int interface_out_step, int control_strategy
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hq() {
+  using namespace Global_Physical_Variables;
+
+  unsigned int j = 0; // keep track of where we are along the surface mesh
+  for (int i = 0; i < n_control; i++) {
+    // find the coordinate of the ith measurement point
+    double DX = Length / n_control;
+    double xi = (DX * (static_cast<double>(i) + 0.5));
+
+    // loop over the free surface elements to find the one containing the point
+    //   assuming the surface elements are ordered in the x direction, we can start the search from the same place as
+    //   we found the last point
+    FaceElement *element;
+    Node *n0 = nullptr, *n1 = nullptr;
+    for (; j < Surface_mesh_pt->nelement(); j++) {
+      element = dynamic_cast<FaceElement *>(Surface_mesh_pt->element_pt(j));
+
+      // assert that the element has 3 nodes TODO: why?
+      assert(element->nnode() == 3);
+
+      // get the x coordinates of the nodes
+      double x0 = element->node_pt(0)->x(0);
+      double x1 = element->node_pt(1)->x(0);
+      double x2 = element->node_pt(2)->x(0);
+
+      // find the enclosing nodes
+      if (xi >= x0 && xi <= x2) {
+        if (xi < x1) {
+          n0 = element->node_pt(0);
+          n1 = element->node_pt(1);
+        } else {
+          n0 = element->node_pt(1);
+          n1 = element->node_pt(2);
+        }
+        break;
+      }
+    }
+
+    // ensure that we found a pair of nodes
+    assert(n0 != nullptr && n1 != nullptr);
+
+    // linearly interpolate to find h(xi)
+    double h0 = n0->x(1);
+    double h1 = n1->x(1);
+    h[i] = h0 + (h1 - h0) * (xi - n0->x(0)) / (n1->x(0) - n0->x(0));
+
+    // use the leading order approximation to get q(xi)
+    q[i] = 2.0 / 3.0 * h[i]; // TODO: do the integration properly
+  }
+}
+
+
+template<class ELEMENT, class INTERFACE_ELEMENT>
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_1d() {
+  using namespace Global_Physical_Variables;
+
+  // open the file
+  std::ofstream file;
+  std::ostringstream filename;
+  filename << Output_prefix << "1d_" << out_step << ".dat";
+  file.open(filename.str().c_str());
+
+  // write the time
+  file << "# " << step << " " << time << std::endl;
+
+  // write the data
+  for (unsigned i = 0; i < n_control; i++) {
+    double DX = Length / n_control;
+    double xi = (DX * (static_cast<double>(i) + 0.5));
+    file << xi << " " << h[i] << " " << q[i] << std::endl;
+  }
+
+  // close the file
+  file.close();
+}
+
+
+template<class ELEMENT, class INTERFACE_ELEMENT>
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_2d() {
+  using namespace Global_Physical_Variables;
+
+  // open the file
+  std::ofstream file;
+  std::ostringstream filename;
+  filename << Output_prefix << "2d_" << out_step << ".dat";
+  file.open(filename.str().c_str());
+
+  // write the time
+  file << "# " << step << " " << time << std::endl;
+
+  // write all of the mesh data
+  Bulk_mesh_pt->output(file, 5);
+
+  // close the file
+  file.close();
+}
+
+template<class ELEMENT, class INTERFACE_ELEMENT>
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
+  const double &dt, const unsigned &nsteps, int out_step, int control_strategy
 ) {
   // Need to use the Global variables here
   using namespace Global_Physical_Variables;
 
-  if (1) {
-    {
-      std::ofstream file;
-      std::ostringstream filename;
-      filename << Output_prefix << "_step_" << 0 << ".dat";
-      file.open(filename.str().c_str());
-      Bulk_mesh_pt->output(file, 5);
-      file.close();
-    } {
-      std::ofstream file;
-      std::ostringstream filename;
-      filename << Output_prefix << "_interface_" << 0 << ".dat";
-      file.open(filename.str().c_str());
-      Surface_mesh_pt->output(file, 5);
-      file.close();
-    }
-  }
+  // output the initial condition
+  set_hq();
+  this->output_1d();
+  this->out_step++;
 
   // if required, set up control variables
-  int control_n = 100;
-  int control_m = 7;
-  double *actuators;
-  double *h;
-  double *q;
   if (control_strategy > 0) {
-    control_set(LQR, WR, control_m, 1, 0.1, 1.0, 0.5, 0.0, Length, control_n, Re, Ca, Alpha);
-    actuators = new double[control_m];
-    h = new double[control_n];
-    q = new double[control_n];
+    control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Length, n_control, Re, Ca, Alpha);
   }
 
   //Loop over the desired number of timesteps
-  for (unsigned t = 1; t <= n_tsteps; t++) {
-    //Increase the counter
+  for (unsigned t = 0; t < nsteps; t++) {
     cout << std::endl;
-    cout << "--------------TIMESTEP (" << control_strategy << ") " << t << " ------------------" << std::endl;
-
+    cout << "--------------TIMESTEP (" << control_strategy << ") " << step << " ------------------" << std::endl;
 
     // Use the control scheme to get the basal forcing
+    /* set the values of h and q */
+    set_hq();
     if (control_strategy > 0) {
-      /* set the values of h and q */
-      unsigned int j = 0; // keep track of where we are along the surface mesh
-      for (int i = 0; i < control_n; i++) {
-        // find the coordinate of the ith measurement point
-        double DX = Length / control_n;
-        double xi = (DX * (static_cast<double>(i) + 0.5));
-
-        // loop over the free surface elements to find the one containing the point
-        //   assuming the surface elements are ordered in the x direction, we can start the search from the same place as
-        //   we found the last point
-        FaceElement *element;
-        Node *n0, *n1;
-        for (; j < Surface_mesh_pt->nelement(); j++) {
-          element = dynamic_cast<FaceElement *>(Surface_mesh_pt->element_pt(j));
-
-          // assert that the element has 3 nodes TODO: why?
-          assert(element->nnode() == 3);
-
-          // get the x coordinates of the nodes
-          double x0 = element->node_pt(0)->x(0);
-          double x1 = element->node_pt(1)->x(0);
-          double x2 = element->node_pt(2)->x(0);
-
-          // find the enclosing nodes
-          if (xi >= x0 && xi <= x2) {
-            if (xi < x1) {
-              n0 = element->node_pt(0);
-              n1 = element->node_pt(1);
-            } else {
-              n0 = element->node_pt(1);
-              n1 = element->node_pt(2);
-            }
-            break;
-          }
-        }
-
-        // linearly interpolate to find h(xi)
-        double h0 = n0->x(1);
-        double h1 = n1->x(1);
-        h[i] = h0 + (h1 - h0) * (xi - n0->x(0)) / (n1->x(0) - n0->x(0));
-
-        // use the leading order approximation to get q(xi)
-        q[i] = 2.0 / 3.0 * h[i]; // TODO: do the integration properly
-      }
-
       /* compute the actuator strengths */
       control_step(dt, h, q);
 
@@ -293,36 +358,16 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       }
     }
 
-    //Take a timestep of size dt
+    // take a timestep of size dt
     unsteady_newton_solve(dt);
+    this->time += dt;
+    this->step++;
 
-    //Uncomment to get full solution output
-    //Change this number to get output every n steps
-    if (t % full_out_step == 0) {
-      std::ofstream file;
-      std::ostringstream filename;
-      filename << Output_prefix << "_step_" << t << ".dat";
-      file.open(filename.str().c_str());
-      Bulk_mesh_pt->output(file, 5);
-      file.close();
+    // output interface information if required
+    if (step % out_step == 0) {
+      this->output_1d();
+      this->out_step++;
     }
-
-    //Always output the interface
-    if (t % interface_out_step == 0) {
-      std::ofstream file;
-      std::ostringstream filename;
-      filename << Output_prefix << "_interface_" << t << ".dat";
-      file.open(filename.str().c_str());
-      Surface_mesh_pt->output(file, 5);
-      file.close();
-    }
-  }
-
-  // if required, tear down control variables
-  if (control_strategy > 0) {
-    delete[] actuators;
-    delete[] h;
-    delete[] q;
   }
 } //end of timestep
 
