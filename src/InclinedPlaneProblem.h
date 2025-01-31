@@ -338,7 +338,7 @@ void progress_bar_finish() {
 void progress_bar_update(double t, int step, int nsteps) {
   cout << "\r";
   // cout << std::re
-  cout << "--------------TIMESTEP (" << control_strategy << ") " << step << " ------------------" << std::flush;
+  cout << "step: " << step << ", t: " << t << std::flush;
 }
 
 
@@ -361,6 +361,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
   //Loop over the desired number of timesteps
   progress_bar_start();
+  progress_bar_update(this->time, this->step, nsteps);
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h and q must be set to the current values
@@ -381,6 +382,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
+    progress_bar_update(this->time, this->step, nsteps);
 
     // output interface information if required
     if (step % out_step == 0) {
