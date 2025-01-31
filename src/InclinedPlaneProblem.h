@@ -18,6 +18,7 @@
 #include "fluid_interface.h"
 
 #include "GlobalPhysicalVariables.h"
+#include "control.h"
 
 using namespace std;
 
@@ -44,6 +45,7 @@ protected:
 public:
   /// Generic Constructor (empty)
   InclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length) : Output_prefix("Unset") {
+    this->Shut_up_in_newton_solve = true; // don't print loads of solver details
   }
 
   /// Set the output prefix
@@ -64,7 +66,10 @@ public:
   void solve_steady();
 
   /// Take n_tsteps timesteps of size dt
-  void timestep(const double &dt, const unsigned &n_tsteps, int full_out_step = 2, int interface_out_step = 1);
+  void timestep(
+    const double &dt, const unsigned &n_tsteps, int full_out_step = 2, int interface_out_step = 1,
+    int control_strategy = 0
+  );
 
   // /// Actions before the timestep
   // /// (update the time-dependent boundary conditions)
@@ -137,8 +142,6 @@ public:
         Bulk_mesh_pt->boundary_node_pt(0, j)->pin(0);
         Bulk_mesh_pt->boundary_node_pt(0, j)->pin(1);
       }
-
-      // TODO: do we need to do anything about PBCs?
     }
 
     //Attach the boundary conditions to the mesh
@@ -189,7 +192,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::solve_steady() {
 //----------------------------------------------------------------------
 template<class ELEMENT, class INTERFACE_ELEMENT>
 void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
-  const double &dt, const unsigned &n_tsteps, int full_out_step, int interface_out_step
+  const double &dt, const unsigned &n_tsteps, int full_out_step, int interface_out_step, int control_strategy
 ) {
   // Need to use the Global variables here
   using namespace Global_Physical_Variables;
@@ -202,9 +205,7 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       file.open(filename.str().c_str());
       Bulk_mesh_pt->output(file, 5);
       file.close();
-    }
-
-    {
+    } {
       std::ofstream file;
       std::ostringstream filename;
       filename << Output_prefix << "_interface_" << 0 << ".dat";
@@ -214,11 +215,83 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     }
   }
 
+  // if required, set up control variables
+  int control_n = 100;
+  int control_m = 7;
+  double *actuators;
+  double *h;
+  double *q;
+  if (control_strategy > 0) {
+    control_set(LQR, WR, control_m, 1, 0.1, 1.0, 0.5, 0.0, Length, control_n, Re, Ca, Alpha);
+    actuators = new double[control_m];
+    h = new double[control_n];
+    q = new double[control_n];
+  }
+
   //Loop over the desired number of timesteps
   for (unsigned t = 1; t <= n_tsteps; t++) {
     //Increase the counter
     cout << std::endl;
-    cout << "--------------TIMESTEP " << t << " ------------------" << std::endl;
+    cout << "--------------TIMESTEP (" << control_strategy << ") " << t << " ------------------" << std::endl;
+
+
+    // Use the control scheme to get the basal forcing
+    if (control_strategy > 0) {
+      /* set the values of h and q */
+      unsigned int j = 0; // keep track of where we are along the surface mesh
+      for (int i = 0; i < control_n; i++) {
+        // find the coordinate of the ith measurement point
+        double DX = Length / control_n;
+        double xi = (DX * (static_cast<double>(i) + 0.5));
+
+        // loop over the free surface elements to find the one containing the point
+        //   assuming the surface elements are ordered in the x direction, we can start the search from the same place as
+        //   we found the last point
+        FaceElement *element;
+        Node *n0, *n1;
+        for (; j < Surface_mesh_pt->nelement(); j++) {
+          element = dynamic_cast<FaceElement *>(Surface_mesh_pt->element_pt(j));
+
+          // assert that the element has 3 nodes TODO: why?
+          assert(element->nnode() == 3);
+
+          // get the x coordinates of the nodes
+          double x0 = element->node_pt(0)->x(0);
+          double x1 = element->node_pt(1)->x(0);
+          double x2 = element->node_pt(2)->x(0);
+
+          // find the enclosing nodes
+          if (xi >= x0 && xi <= x2) {
+            if (xi < x1) {
+              n0 = element->node_pt(0);
+              n1 = element->node_pt(1);
+            } else {
+              n0 = element->node_pt(1);
+              n1 = element->node_pt(2);
+            }
+            break;
+          }
+        }
+
+        // linearly interpolate to find h(xi)
+        double h0 = n0->x(1);
+        double h1 = n1->x(1);
+        h[i] = h0 + (h1 - h0) * (xi - n0->x(0)) / (n1->x(0) - n0->x(0));
+
+        // use the leading order approximation to get q(xi)
+        q[i] = 2.0 / 3.0 * h[i]; // TODO: do the integration properly
+      }
+
+      /* compute the actuator strengths */
+      control_step(dt, h, q);
+
+      /* set basal velocity from actuator strengths */
+      unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
+      for (unsigned n = 0; n < n_node; n++) {
+        Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+        node->set_value(1, control(node->x(0)));
+      }
+    }
 
     //Take a timestep of size dt
     unsteady_newton_solve(dt);
@@ -243,6 +316,13 @@ void InclinedPlaneProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       Surface_mesh_pt->output(file, 5);
       file.close();
     }
+  }
+
+  // if required, tear down control variables
+  if (control_strategy > 0) {
+    delete[] actuators;
+    delete[] h;
+    delete[] q;
   }
 } //end of timestep
 

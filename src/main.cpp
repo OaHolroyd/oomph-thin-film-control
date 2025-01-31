@@ -63,15 +63,15 @@ int main(int argc, char **argv) {
   // Create the problem
   SpineInclinedPlaneProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(100, 6, Length);
 
-  // Solve the steady problem
+  // Step up to the start of the controls
   problem.solve_steady();
+  double tburn = 100.0;
+  double dtburn = 0.1;
+  problem.assign_initial_values_impulsive(dtburn);
+  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 100, 100, 0);
 
-  // Prepare the problem for timestepping
-  double tend = 200.0;
+  // Step with controls turned on
+  double tcontrol = 50.0;
   double dt = 0.1;
-  int n_tsteps = static_cast<int>(tend / dt);
-  problem.assign_initial_values_impulsive(dt);
-
-  // Timestep it
-  problem.timestep(dt, n_tsteps, 20, 20);
+  problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 10, 1);
 }
