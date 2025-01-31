@@ -70,13 +70,13 @@ int main(int argc, char **argv) {
 
   // Step up to the start of the controls
   problem.initial_condition(1, 0.01);
-  double tburn = 100.0;
+  double tburn = 200.0;
   double dtburn = 0.1;
   problem.assign_initial_values_impulsive(dtburn);
   problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 10, 0);
 
   // Step with controls turned on
-  double tcontrol = 50.0;
+  double tcontrol = 100.0;
   double dt = 0.1;
   problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
 }

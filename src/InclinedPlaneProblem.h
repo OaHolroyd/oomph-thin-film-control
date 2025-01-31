@@ -42,16 +42,16 @@ protected:
   /// Prefix for output files
   std::string Output_prefix;
 
-  /// Storage of the interface/flux at regular intervals
-  double *h, *q;
+  /// Storage of the interface/flux/forcing at regular intervals
+  double *h, *q, *f;
 
   /// Information for the control system
   int n_control; // dimension of the control system
   int m_control; // number of actuators
   int p_control; // number of observers
 
-  /// fill the h ad q arrays with the current values
-  void set_hq();
+  /// fill the h, q, f arrays with the current values
+  void set_hqf(int use_control = 0);
 
   /// output 1D information
   void output_1d();
@@ -85,9 +85,9 @@ public:
     // Ensure we use the directory as a prefix
     this->Output_prefix = out_dir.c_str() + std::string("/");
 
-    // don't print loads of solver details
-    // TODO: figure out how to hide them all properly
+    // don't print loads of internal solver details
     this->Shut_up_in_newton_solve = true;
+    this->linear_solver_pt()->disable_doc_time();
 
     // set control details
     this->n_control = n_control;
@@ -96,6 +96,7 @@ public:
 
     this->h = new double[n_control];
     this->q = new double[n_control];
+    this->f = new double[n_control];
 
     // mesh details
   }
@@ -191,6 +192,7 @@ public:
 
     delete[] this->h;
     delete[] this->q;
+    delete[] this->f;
   }
 };
 
@@ -224,7 +226,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int K,
 
 
 template<class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hq() {
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_control) {
   using namespace Global_Physical_Variables;
 
   unsigned int j = 0; // keep track of where we are along the surface mesh
@@ -272,6 +274,9 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hq() {
 
     // use the leading order approximation to get q(xi)
     q[i] = 2.0 / 3.0 * h[i]; // TODO: do the integration properly
+
+    // use control to set f
+    f[i] = (use_control > 0) ? control(xi) : 0.0;
   }
 }
 
@@ -293,7 +298,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_1d() {
   for (unsigned i = 0; i < n_control; i++) {
     double DX = Length / n_control;
     double xi = (DX * (static_cast<double>(i) + 0.5));
-    file << xi << " " << h[i] << " " << q[i] << std::endl;
+    file << xi << " " << h[i] << " " << q[i] << " " << f[i] << std::endl;
   }
 
   // close the file
@@ -321,6 +326,22 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_2d() {
   file.close();
 }
 
+
+void progress_bar_start() {
+  cout << std::endl;
+}
+
+void progress_bar_finish() {
+  cout << std::endl;
+}
+
+void progress_bar_update(double t, int step, int nsteps) {
+  cout << "\r";
+  // cout << std::re
+  cout << "--------------TIMESTEP (" << control_strategy << ") " << step << " ------------------" << std::flush;
+}
+
+
 template<class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   const double &dt, const unsigned &nsteps, int out_step, int control_strategy
@@ -329,7 +350,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   using namespace Global_Physical_Variables;
 
   // output the initial condition
-  set_hq();
+  set_hqf(control_strategy);
   this->output_1d();
   this->out_step++;
 
@@ -339,13 +360,10 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   }
 
   //Loop over the desired number of timesteps
+  progress_bar_start();
   for (unsigned t = 0; t < nsteps; t++) {
-    cout << std::endl;
-    cout << "--------------TIMESTEP (" << control_strategy << ") " << step << " ------------------" << std::endl;
-
-    // Use the control scheme to get the basal forcing
-    /* set the values of h and q */
-    set_hq();
+    /* Use the control scheme to get the basal forcing */
+    // NOTE h and q must be set to the current values
     if (control_strategy > 0) {
       /* compute the actuator strengths */
       control_step(dt, h, q);
@@ -358,10 +376,11 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       }
     }
 
-    // take a timestep of size dt
+    /* take a timestep of size dt */
     unsteady_newton_solve(dt);
     this->time += dt;
     this->step++;
+    set_hqf(control_strategy); // update the h, q, f arrays
 
     // output interface information if required
     if (step % out_step == 0) {
@@ -369,6 +388,8 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       this->out_step++;
     }
   }
+
+  progress_bar_finish();
 } //end of timestep
 
 

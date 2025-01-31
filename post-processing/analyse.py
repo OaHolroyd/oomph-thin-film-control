@@ -10,27 +10,29 @@ def shift_hmax_to_zero(x, h):
     return x, h
 
 
-def get_oomphlib_data(output_dir, dt, step):
+def get_oomphlib_data(output_dir):
     # timeseries of dh
     t = []
     dh = []
     k = 0
-    for i in range(0, 100_000, step):
-        filename = f"{output_dir}/spine_interface_{i}.dat"
+    for i in range(0, 100_000):
+        filename = f"{output_dir}/1d_{i}.dat"
         try:
             with open(filename) as fp:
                 # dummy data (to be overwritten)
                 dh.append(0.0)
-                t.append(i * dt)
+                t.append(0.0)
 
                 # read the info from the file
                 for line in fp:
-                    if len(line) > 20:
+                    if line[0] == '#':
+                        t[k] = float(line.rstrip().split(' ')[2])
+                    else:
                         # get h from the node
                         numbers = [float(s) for s in line.rstrip().split(' ')]
                         dh[k] = max(dh[k], numbers[1] - 1.0)
         except FileNotFoundError:
-            final_i = i - step
+            final_i = i - 1
             break
         k = k + 1
     t = np.array(t)
@@ -40,11 +42,11 @@ def get_oomphlib_data(output_dir, dt, step):
     # final interface
     x = []
     h = []
-    filename = f"{output_dir}/spine_interface_{final_i}.dat"
+    filename = f"{output_dir}/1d_{final_i}.dat"
     with open(filename) as fp:
         # read the info from the file
         for line in fp:
-            if len(line) > 20:
+            if line[0] != '#':
                 # get h from the node
                 row = [float(s) for s in line.rstrip().split(' ')]
                 x.append(row[0])
@@ -59,8 +61,7 @@ def get_oomphlib_data(output_dir, dt, step):
 
 def main():
     ########### GET OOMPH-LIB DATA ###########
-    t, dh, x, h = get_oomphlib_data("output", 0.1, 20)
-    t250, dh250, x250, h250 = get_oomphlib_data("output-250", 0.05, 20)
+    t, dh, x, h = get_oomphlib_data("output")
 
 
     ########### GET BASILISK DATA ###########
@@ -101,7 +102,7 @@ def main():
     # plot growth
     ax[0].semilogy(t_basilisk, dh_basilisk, label='basilisk (n=35008)')
     ax[0].semilogy(t, dh, label='oomph-lib (n=100 x 6)')
-    ax[0].semilogy(t250, dh250, linestyle='--', label='oomph-lib (n=250 x 10)')
+    # ax[0].semilogy(t250, dh250, linestyle='--', label='oomph-lib (n=250 x 10)')
     ax[0].legend()
     ax[0].set_xlabel('t')
     ax[0].set_ylabel('max(h-1)')
@@ -109,7 +110,7 @@ def main():
     # plot interface
     ax[1].scatter(x_basilisk, h_basilisk, label='basilisk (n=35008)')
     ax[1].scatter(x, h, label='oomph-lib (n=100 x 6)')
-    ax[1].scatter(x250, h250, label='oomph-lib (n=250 x 10)')
+    # ax[1].scatter(x250, h250, label='oomph-lib (n=250 x 10)')
     ax[1].legend()
     ax[1].set_xlabel('x')
     ax[1].set_ylabel('h')
