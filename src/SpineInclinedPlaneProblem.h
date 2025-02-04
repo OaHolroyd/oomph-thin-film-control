@@ -9,12 +9,21 @@
 
 #include "InclinedPlaneProblem.h"
 
-//======================================================================
-/// Create a spine mesh for the problem
-//======================================================================
+// ======================================================================
+//   Create a spine mesh for the problem
+// ======================================================================
 template<class ELEMENT>
 class SpineInclinedPlaneMesh : public SingleLayerSpineMesh<ELEMENT> {
 public:
+  /**
+   * Constructor for the spine inclined plane mesh
+   *
+   * @param nx Number of elements in the x direction
+   * @param ny Number of elements in the y direction
+   * @param lx Length of the domain in the x direction
+   * @param ly Length of the domain in the y direction
+   * @param time_stepper_pt Pointer to the time stepper
+   */
   SpineInclinedPlaneMesh(
     const unsigned &nx, const unsigned &ny, const double &lx, const double &ly, TimeStepper *time_stepper_pt
   ) : SingleLayerSpineMesh<ELEMENT>(nx, ny, lx, ly, true, time_stepper_pt) {
@@ -34,35 +43,44 @@ public:
 };
 
 
-//============================================================================
-//Specific class for inclined plane problem using spines
-//============================================================================
+// ============================================================================
+//  Specific class for inclined plane problem using spines
+// ============================================================================
 template<class ELEMENT, class TIMESTEPPER>
-class SpineInclinedPlaneProblem :
-    public InclinedPlaneProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> > {
+class SpineControlledFilmProblem :
+    public ControlledFilmProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> > {
 public:
-  //Constructor
-  SpineInclinedPlaneProblem(const unsigned &nx, const unsigned &ny, const double &length): InclinedPlaneProblem<
-    ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> >(nx, ny, length) {
-    //Set the name
-    this->set_output_prefix("spine");
+  /**
+   * Constructor for the spine inclined plane problem
+   *
+   * @param nx Number of elements in the x direction
+   * @param ny Number of elements in the y direction
+   * @param n_control the dimension of the control system
+   * @param m_control the number of actuators
+   * @param p_control the number of observers
+   */
+  SpineControlledFilmProblem(
+    const unsigned &nx, const unsigned &ny, const int &n_control, const int &m_control, const int &p_control
+  ): ControlledFilmProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> >(n_control, m_control, p_control) {
+    using namespace Global_Physical_Variables; // to access the length
 
-    //Create our one and only timestepper, with adaptive timestepping
+    // create our one and only timestepper, with adaptive timestepping
     this->add_time_stepper_pt(new TIMESTEPPER);
 
-    //Create the bulk mesh
-    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, length, 1.0, this->time_stepper_pt());
+    // create the bulk mesh
+    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, Length, 1.0, this->time_stepper_pt());
 
-    //Create the free surface elements
+    // create the free surface elements
     this->make_free_surface_elements();
 
-    //Add all sub meshes to the problem
+    // add all sub meshes to the problem
     this->add_sub_mesh(this->Bulk_mesh_pt);
     this->add_sub_mesh(this->Surface_mesh_pt);
-    //Create the global mesh
+
+    // create the global mesh
     this->build_global_mesh();
 
-    //Complete the build of the problem
+    // complete the build of the problem
     this->complete_build();
   }
 
