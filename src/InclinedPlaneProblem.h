@@ -19,6 +19,7 @@
 
 #include "GlobalPhysicalVariables.h"
 #include "control.h"
+#include "progress_bar.h"
 
 using namespace std;
 
@@ -42,14 +43,6 @@ protected:
   /// Prefix for output files
   std::string Output_prefix;
 
-  /// Storage of the interface/flux/forcing at regular intervals
-  double *h, *q, *f;
-
-  /// Information for the control system
-  int n_control; // dimension of the control system
-  int m_control; // number of actuators
-  int p_control; // number of observers
-
   /// fill the h, q, f arrays with the current values
   void set_hqf(int use_control = 0);
 
@@ -60,6 +53,14 @@ protected:
   void output_2d();
 
 public:
+  /// Storage of the interface/flux/forcing at regular intervals
+  double *h, *q, *f;
+
+  /// Information for the control system
+  int n_control; // dimension of the control system
+  int m_control; // number of actuators
+  int p_control; // number of observers
+
   /// record time, number of time steps, and number of output steps
   double time;
   int step;
@@ -327,18 +328,17 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_2d() {
 }
 
 
-void progress_bar_start() {
-  cout << std::endl;
-}
+template<class ELEMENT, class INTERFACE_ELEMENT>
+void prog_bar_print(void *problem) {
+  auto p = (ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT> *)(problem);
 
-void progress_bar_finish() {
-  cout << std::endl;
-}
+  // find the maximum interfacial deviation
+  double max_dh = 0.0;
+  for (int i = 0; i < p->n_control; i++) {
+    max_dh = std::max(max_dh, std::abs(p->h[i] - 1.0));
+  }
 
-void progress_bar_update(double t, int step, int nsteps) {
-  cout << "\r";
-  // cout << std::re
-  cout << "step: " << step << ", t: " << t << std::flush;
+  fprintf(stderr, " [t = %3.2f, dhmax = %5g]", p->time, max_dh);
 }
 
 
@@ -360,8 +360,9 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   }
 
   //Loop over the desired number of timesteps
-  progress_bar_start();
-  progress_bar_update(this->time, this->step, nsteps);
+  ProgressBar pbar = ProgressBar(nsteps, 50, &prog_bar_print<ELEMENT, INTERFACE_ELEMENT>);
+  pbar.start();
+  pbar.update(this->step);
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h and q must be set to the current values
@@ -382,7 +383,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
-    progress_bar_update(this->time, this->step, nsteps);
+    pbar.update(this->step, this);
 
     // output interface information if required
     if (step % out_step == 0) {
@@ -391,7 +392,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     }
   }
 
-  progress_bar_finish();
+  pbar.end(this);
 } //end of timestep
 
 
