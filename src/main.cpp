@@ -38,7 +38,7 @@
 #include "generic.h"
 
 // Project-specific includes
-#include "SpineInclinedPlaneProblem.h"
+#include "SpineProblem.h"
 
 using namespace std;
 
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   // Set the direction of gravity
   // TODO: should be in the Global_Physical_Variables namespace
   G[0] = 2.0;
-  G[1] = -2.0 / tan(Alpha);
+  G[1] = -2.0 / tan(Theta);
 
   // Create the control problem
   unsigned nx = 100;

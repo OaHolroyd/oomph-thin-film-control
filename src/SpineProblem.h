@@ -6,8 +6,10 @@
 #define SPINEINCLINEDPLANEPROBLEM_H
 
 #include "meshes/single_layer_spine_mesh.h"
+#include "navier_stokes.h"
+#include "fluid_interface.h"
 
-#include "InclinedPlaneProblem.h"
+#include "Problem.h"
 
 // ======================================================================
 //   Create a spine mesh for the problem
@@ -44,14 +46,14 @@ public:
 
 
 // ============================================================================
-//  Specific class for inclined plane problem using spines
+//  Specific class for controlled film problem using spines
 // ============================================================================
 template<class ELEMENT, class TIMESTEPPER>
 class SpineControlledFilmProblem :
     public ControlledFilmProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> > {
 public:
   /**
-   * Constructor for the spine inclined plane problem
+   * Constructor for the spine controlled film problem
    *
    * @param nx Number of elements in the x direction
    * @param ny Number of elements in the y direction
@@ -68,7 +70,7 @@ public:
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, Length, 1.0, this->time_stepper_pt());
+    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, Lx, 1.0, this->time_stepper_pt());
 
     // create the free surface elements
     this->make_free_surface_elements();
