@@ -46,11 +46,11 @@ protected:
   /// fill the h, q, f arrays with the current values
   void set_hqf(int use_control = 0);
 
-  /// output 1D information
-  void output_1d();
+  /// output surface information
+  void output_surface();
 
-  /// output 2D information
-  void output_2d();
+  /// output mesh information
+  void output_mesh();
 
 public:
   /// Storage of the interface/flux/forcing at regular intervals
@@ -283,7 +283,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_control)
 
 
 template<class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_1d() {
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   using namespace Global_Physical_Variables;
 
   // open the file
@@ -308,7 +308,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_1d() {
 
 
 template<class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_2d() {
+void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_mesh() {
   using namespace Global_Physical_Variables;
 
   // open the file
@@ -351,7 +351,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
   // output the initial condition
   set_hqf(control_strategy);
-  this->output_1d();
+  this->output_surface();
   this->out_step++;
 
   // if required, set up control variables
@@ -387,7 +387,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
     // output interface information if required
     if (step % out_step == 0) {
-      this->output_1d();
+      this->output_surface();
       this->out_step++;
     }
   }

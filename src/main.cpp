@@ -38,7 +38,7 @@
 #include "generic.h"
 
 // Project-specific includes
-#include "SpineInclinedPlaneProblem.h"
+#include "SpineProblem.h"
 
 using namespace std;
 

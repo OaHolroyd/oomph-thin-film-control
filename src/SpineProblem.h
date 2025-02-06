@@ -7,7 +7,7 @@
 
 #include "meshes/single_layer_spine_mesh.h"
 
-#include "InclinedPlaneProblem.h"
+#include "Problem.h"
 
 // ======================================================================
 //   Create a spine mesh for the problem
