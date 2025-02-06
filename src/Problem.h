@@ -2,21 +2,20 @@
 // Created by Oscar Holroyd on 09/01/2025.
 //
 
-#ifndef INCLINEDPLANEPROBLEM_H
-#define INCLINEDPLANEPROBLEM_H
+#ifndef CONTROLLEDFILMPROBLEM_H
+#define CONTROLLEDFILMPROBLEM_H
 
-//Standard C++ library includes
+// Standard C++ library includes
 #include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <cmath>
 
-//Finite-Element library routines
+// Finite-Element library routines
 #include "generic.h"
-#include "navier_stokes.h"
-#include "fluid_interface.h"
 
+// Project-specific includes
 #include "GlobalPhysicalVariables.h"
 #include "control.h"
 #include "progress_bar.h"
@@ -177,7 +176,7 @@ public:
       }
     }
 
-    //Attach the boundary conditions to the mesh
+    // Attach the boundary conditions to the mesh
     std::cout << assign_eqn_numbers() << " in the main problem" << std::endl;
   } //end of complete_build
 
@@ -216,7 +215,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int K,
       double y = Bulk_mesh_pt->node_pt(n)->x(1);
 
       // perturb the y values using the wavenumber and amplitude specified
-      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + delta * sin(K * 2.0 * M_PI * (x + 10.0) / Length);
+      Bulk_mesh_pt->node_pt(n)->x(1) *= 1.0 + delta * sin(K * 2.0 * M_PI * (x + 10.0) / Lx);
 
       // set the velocity to the Nusselt flat-film solution
       Bulk_mesh_pt->node_pt(n)->set_value(0, y * (2.0 - y));
@@ -233,7 +232,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_control)
   unsigned int j = 0; // keep track of where we are along the surface mesh
   for (int i = 0; i < n_control; i++) {
     // find the coordinate of the ith measurement point
-    double DX = Length / n_control;
+    double DX = Lx / n_control;
     double xi = (DX * (static_cast<double>(i) + 0.5));
 
     // loop over the free surface elements to find the one containing the point
@@ -297,7 +296,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
 
   // write the data
   for (unsigned i = 0; i < n_control; i++) {
-    double DX = Length / n_control;
+    double DX = Lx / n_control;
     double xi = (DX * (static_cast<double>(i) + 0.5));
     file << xi << " " << h[i] << " " << q[i] << " " << f[i] << std::endl;
   }
@@ -356,7 +355,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
   // if required, set up control variables
   if (control_strategy > 0) {
-    control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Length, n_control, Re, Ca, Alpha);
+    control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx, n_control, Re, Ca, Theta);
   }
 
   //Loop over the desired number of timesteps
@@ -396,4 +395,4 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 } //end of timestep
 
 
-#endif //INCLINEDPLANEPROBLEM_H
+#endif //CONTROLLEDFILMPROBLEM_H
