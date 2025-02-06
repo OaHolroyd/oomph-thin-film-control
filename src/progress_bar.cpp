@@ -184,7 +184,7 @@ void ProgressBar::update(int progress, void *data, bool force) {
 
   // compute elapsed time
   this->mid_event = std::clock();
-  this->elapsed_time = 1000.0 * (float)(this->mid_event - this->start_event) / (float) CLOCKS_PER_SEC;
+  this->elapsed_time = 1000.0f * (float)(this->mid_event - this->start_event) / (float) CLOCKS_PER_SEC;
 
   // decide whether to print
   if ((this->elapsed_time - this->last_update < this->period * 1000.0) && !force) {
