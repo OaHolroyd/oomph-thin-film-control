@@ -5,17 +5,17 @@
 #ifndef SPINEINCLINEDPLANEPROBLEM3D_H
 #define SPINEINCLINEDPLANEPROBLEM3D_H
 
-#include "meshes/single_layer_cubic_spine_mesh.h"
 #include "navier_stokes.h"
 #include "fluid_interface.h"
 
+#include "SingleLayerSpineMesh3D.h"
 #include "Problem_3d.h"
 
 // ======================================================================
 //   Create a spine mesh for the problem
 // ======================================================================
 template<class ELEMENT>
-class SpineInclinedPlaneMesh3D : public SingleLayerCubicSpineMesh<ELEMENT> {
+class SpineFilmMesh3D : public SingleLayerSpineMesh3D<ELEMENT> {
 public:
   /**
    * Constructor for the spine inclined plane mesh
@@ -28,25 +28,12 @@ public:
    * @param lz Length of the domain in the z direction
    * @param time_stepper_pt Pointer to the time stepper
    */
-  SpineInclinedPlaneMesh3D(
+  SpineFilmMesh3D(
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const double &lx, const double &ly, const double &lz,
     TimeStepper *time_stepper_pt
-  ) : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, time_stepper_pt) {
-    // TODO: need to make it periodic in th x and y directions
+  ) : SingleLayerSpineMesh3D<ELEMENT>(nx, ny, nz, lx, ly, lz, true, true, time_stepper_pt) {
   } //end of constructor
-
-  /// General node update function implements pure virtual function
-  /// defined in SpineMesh base class and performs specific node update
-  /// actions:  along vertical spines
-  virtual void spine_node_update(SpineNode *spine_node_pt) {
-    // Get fraction along the spine
-    double W = spine_node_pt->fraction();
-    // Get spine height
-    double H = spine_node_pt->h();
-    // Set the value of y
-    spine_node_pt->x(2) = W * H;
-  }
 };
 
 
@@ -78,7 +65,7 @@ public:
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh3D<ELEMENT>(nx, ny, nz, Lx, Ly, 1.0, this->time_stepper_pt());
+    this->Bulk_mesh_pt = new SpineFilmMesh3D<ELEMENT>(nx, ny, nz, Lx, Ly, 1.0, this->time_stepper_pt());
 
     // create the free surface elements
     this->make_free_surface_elements();

@@ -295,7 +295,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   file << "# " << step << " " << time << std::endl;
 
   // write the data
-  for (unsigned i = 0; i < n_control; i++) {
+  for (int i = 0; i < n_control; i++) {
     double DX = Lx / n_control;
     double xi = (DX * (static_cast<double>(i) + 0.5));
     file << xi << " " << h[i] << " " << q[i] << " " << f[i] << std::endl;
@@ -359,9 +359,10 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   }
 
   //Loop over the desired number of timesteps
+  int start_step = this->step; // if this is not the first call to timestep then we not be starting at step 0
   ProgressBar pbar = ProgressBar(nsteps, 50, &prog_bar_print<ELEMENT, INTERFACE_ELEMENT>);
   pbar.start();
-  pbar.update(this->step);
+  pbar.update(this->step - start_step);
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h and q must be set to the current values
@@ -382,7 +383,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
-    pbar.update(this->step, this);
+    pbar.update(this->step - start_step, this);
 
     // output interface information if required
     if (step % out_step == 0) {

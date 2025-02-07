@@ -15,7 +15,7 @@
 //   Create a spine mesh for the problem
 // ======================================================================
 template<class ELEMENT>
-class SpineInclinedPlaneMesh : public SingleLayerSpineMesh<ELEMENT> {
+class SpineFilmMesh : public SingleLayerSpineMesh<ELEMENT> {
 public:
   /**
    * Constructor for the spine inclined plane mesh
@@ -26,22 +26,10 @@ public:
    * @param ly Length of the domain in the y direction
    * @param time_stepper_pt Pointer to the time stepper
    */
-  SpineInclinedPlaneMesh(
+  SpineFilmMesh(
     const unsigned &nx, const unsigned &ny, const double &lx, const double &ly, TimeStepper *time_stepper_pt
   ) : SingleLayerSpineMesh<ELEMENT>(nx, ny, lx, ly, true, time_stepper_pt) {
   } //end of constructor
-
-  /// General node update function implements pure virtual function
-  /// defined in SpineMesh base class and performs specific node update
-  /// actions:  along vertical spines
-  virtual void spine_node_update(SpineNode *spine_node_pt) {
-    //Get fraction along the spine
-    double W = spine_node_pt->fraction();
-    //Get spine height
-    double H = spine_node_pt->h();
-    //Set the value of y
-    spine_node_pt->x(1) = W * H;
-  }
 };
 
 
@@ -70,7 +58,7 @@ public:
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    this->Bulk_mesh_pt = new SpineInclinedPlaneMesh<ELEMENT>(nx, ny, Lx, 1.0, this->time_stepper_pt());
+    this->Bulk_mesh_pt = new SpineFilmMesh<ELEMENT>(nx, ny, Lx, 1.0, this->time_stepper_pt());
 
     // create the free surface elements
     this->make_free_surface_elements();

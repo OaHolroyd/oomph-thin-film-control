@@ -47,9 +47,9 @@ int main(int argc, char **argv) {
     problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
   } else {
     // Create the control problem
-    unsigned nx = 90;
-    unsigned ny = 30;
-    unsigned nz = 6;
+    unsigned nx = 5;
+    unsigned ny = 4;
+    unsigned nz = 3;
     int nx_control = 90;
     int ny_control = 30;
     int m_control = 7;
