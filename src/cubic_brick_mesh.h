@@ -127,7 +127,73 @@ public:
     // Return the value of Zmax
     return Zmax;
   }
+
+  /// Set periodic_e and periodic_n to the element and node number of the
+  /// periodic image of the node e, n. Must not be called if the mesh is not
+  /// periodic in the x or y direction, and if (e, n) is not on the boundary.
+  void get_periodic_element_node(unsigned e, unsigned n, unsigned *periodic_e,
+                                 unsigned *periodic_n);
 };
+
+template <class ELEMENT>
+void CubicBrickMesh<ELEMENT>::get_periodic_element_node(unsigned e, unsigned n,
+                                                        unsigned *periodic_e,
+                                                        unsigned *periodic_n) {
+  // decompose e into x, y, z indices
+  unsigned long ex = e % Nx;
+  unsigned long ey = (e / Nx) % Ny;
+  unsigned long ez = e / (Nx * Ny);
+
+  // decompose n into x, y, z indices
+  unsigned nx = n % Np;
+  unsigned ny = (n / Np) % Np;
+  unsigned nz = n / (Np * Np);
+
+  // corner case
+  if (Xperiodic && Yperiodic && ex == Nx - 1 && ey == Ny - 1 &&
+      nx == (Np - 1) && ny == (Np - 1)) {
+    *periodic_e = ez * Nx * Ny;
+    *periodic_n = nz * Np * Np;
+
+    // check that the z coordinate matches
+    Node *node_pt = finite_element_pt(e)->node_pt(n);
+    Node *periodic_node_pt =
+        finite_element_pt(*periodic_e)->node_pt(*periodic_n);
+    assert(node_pt->x(2) == periodic_node_pt->x(2));
+    return;
+  }
+
+  // right boundary, x-periodic
+  if (Xperiodic && ex == Nx - 1 && nx == Np - 1) {
+    *periodic_e = ey * Nx + ez * Nx * Ny;
+    *periodic_n = ny * Np + nz * Np * Np;
+
+    // check that the y and z coordinates match
+    Node *node_pt = finite_element_pt(e)->node_pt(n);
+    Node *periodic_node_pt =
+        finite_element_pt(*periodic_e)->node_pt(*periodic_n);
+    assert(node_pt->x(1) == periodic_node_pt->x(1));
+    assert(node_pt->x(2) == periodic_node_pt->x(2));
+    return;
+  }
+
+  // rear boundary, y-periodic
+  if (Yperiodic && ey == Ny - 1 && ny == Np - 1) {
+    *periodic_e = ex + ez * Nx * Ny;
+    *periodic_n = nx + nz * Np * Np;
+
+    // check that the x and z coordinates match
+    Node *node_pt = finite_element_pt(e)->node_pt(n);
+    Node *periodic_node_pt =
+        finite_element_pt(*periodic_e)->node_pt(*periodic_n);
+    assert(node_pt->x(0) == periodic_node_pt->x(0));
+    assert(node_pt->x(2) == periodic_node_pt->x(2));
+    return;
+  }
+
+  // if we get here, the node is not on a periodic boundary
+  assert(false);
+}
 
 /// given a node on a boundary, the element number containing it and periodic
 /// direction (0 for x, 1 for y, 2 for z), this function returns the pointer to
@@ -172,7 +238,7 @@ void CubicBrickMesh<ELEMENT>::set_periodic_node(Node *node_pt,
   }
 
   // catch the corner case where the element is in the x/y corner
-  if (x == Xmax && y == Ymax) {
+  if (x == Xmax && y == Ymax && this->Xperiodic && this->Yperiodic) {
     op_element_pt = finite_element_pt(el_num - (Ny * Nx - 1));
     op_x = Xmin;
     op_y = Ymin;

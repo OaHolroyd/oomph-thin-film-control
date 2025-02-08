@@ -15,10 +15,10 @@ using namespace oomph;
 //The global physical variables
 namespace Global_Physical_Variables_3d {
   /// The length of the domain in the x direction (streamwise)
-  double Lx = 30;
+  double Lx = 10;
 
   /// The length of the domain in the y direction (spanwise)
-  double Ly = 10;
+  double Ly = 8;
 
   /// Reynolds number, based on the surface velocity of a flat film (Nusselt velocity)
   double Re = 15.0;
