@@ -131,8 +131,7 @@ public:
     Surface_mesh_pt = new Mesh;
 
     // The free surface is on the boundary 2
-    // TODO: is it still boundary 2 in 3D?
-    unsigned b = 2;
+    unsigned b = 5;
     unsigned n_boundary_element = Bulk_mesh_pt->nboundary_element(b);
     // Loop over the elements and create the appropriate interface elements
     for (unsigned e = 0; e < n_boundary_element; e++) {

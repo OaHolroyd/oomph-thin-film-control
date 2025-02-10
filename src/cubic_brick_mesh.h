@@ -9,6 +9,8 @@
 #include "generic/brick_mesh.h"
 #include "generic/mesh.h"
 
+using namespace oomph;
+
 template <class ELEMENT> class CubicBrickMesh : public virtual BrickMeshBase {
 protected:
   /// Number of elements in x direction

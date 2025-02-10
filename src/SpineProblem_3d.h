@@ -42,7 +42,7 @@ public:
 // ============================================================================
 template<class ELEMENT, class TIMESTEPPER>
 class SpineControlledFilmProblem3D :
-    public ControlledFilmProblem3D<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> > {
+    public ControlledFilmProblem3D<ELEMENT, SpineSurfaceFluidInterfaceElement<ELEMENT> > {
 public:
   /**
    * Constructor for the spine controlled film problem
@@ -58,7 +58,7 @@ public:
   SpineControlledFilmProblem3D(
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const int &nx_control, const int &ny_control, const int &m_control, const int &p_control
-  ): ControlledFilmProblem3D<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> >(nx_control, ny_control, m_control, p_control) {
+  ): ControlledFilmProblem3D<ELEMENT, SpineSurfaceFluidInterfaceElement<ELEMENT> >(nx_control, ny_control, m_control, p_control) {
     using namespace Global_Physical_Variables_3d; // to access the length
 
     // create our one and only timestepper, with adaptive timestepping
