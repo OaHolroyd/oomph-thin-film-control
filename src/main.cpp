@@ -23,22 +23,22 @@ using namespace oomph;
 int main(int argc, char **argv) {
   CommandLineArgs::setup(argc, argv);
 
+#define NDIM (3)
+#if NDIM == 2
   using namespace Global_Physical_Variables;
+#else
+  using namespace Global_Physical_Variables_3d;
+#endif
 
-#define FLUID_ELEMENT QTaylorHoodElement<2>
-#define FLUID_ELEMENT_3D QTaylorHoodElement<3>
-
-  int ndim = 2;
-
-  if (ndim == 2) {
+  if (NDIM == 2) {
     // Create the control problem
     unsigned nx = 100;
     unsigned ny = 6;
     int n_control = 100;
     int m_control = 7;
     int p_control = 1;
-    SpineControlledFilmProblem<SpineElement<FLUID_ELEMENT>, BDF<2>> problem(
-        nx, ny, n_control, m_control, p_control);
+    SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<NDIM>>, BDF<2>>
+        problem(nx, ny, n_control, m_control, p_control);
 
     // Step up to the start of the controls
     problem.initial_condition(1, 0.01);
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     int ny_control = 30;
     int m_control = 7;
     int p_control = 1;
-    SpineControlledFilmProblem3D<SpineElement<FLUID_ELEMENT_3D>, BDF<2>>
+    SpineControlledFilmProblem3D<SpineElement<QTaylorHoodElement<NDIM>>, BDF<2>>
         problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
     // Step up to the start of the controls
@@ -601,7 +601,8 @@ int main(int argc, char *argv[]) {
     doc_info.set_directory("output");
 
     // Set up problem
-    RayleighProblem<QTaylorHoodElement<3>, BDF<2>> problem(nx, ny, nz, lx, ly, lz);
+    RayleighProblem<QTaylorHoodElement<3>, BDF<2>> problem(nx, ny, nz, lx, ly,
+                                                           lz);
 
     // Run the unsteady simulation
     problem.unsteady_run(doc_info);
