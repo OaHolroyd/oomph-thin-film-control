@@ -41,9 +41,20 @@ public:
   }
 
 protected:
-  /// Helper function to build a single spine for the (lx, ly)-node of element
-  /// (ex, ey)
-  virtual void build_spine(unsigned ex, unsigned ey, unsigned ly, unsigned lx);
+  /// Helper function to build a single spine for the nth node of element e
+  virtual void build_spine(unsigned e, unsigned n);
+
+  /// Helper function to build a single spine for the nth node of element e
+  /// in the case of periodicity in x. (e, n) must be on the right boundary (2)
+  virtual void build_spine_periodic_x(unsigned e, unsigned n);
+
+  /// Helper function to build a single spine for the nth node of element e
+  /// in the case of periodicity in y. (e, n) must be on the rear boundary (3)
+  virtual void build_spine_periodic_y(unsigned e, unsigned n);
+
+  /// Helper function to build a single spine for the nth node of element e
+  /// in the case of periodicity in x and y. (e, n) must be at the rear right
+  virtual void build_spine_periodic_xy(unsigned e, unsigned n);
 
   /// Helper function to actually build the single-layer spine mesh
   /// (called from various constructors)
@@ -89,154 +100,274 @@ SingleLayerSpineMesh3D<ELEMENT>::SingleLayerSpineMesh3D(
 }
 
 template <class ELEMENT>
-void SingleLayerSpineMesh3D<ELEMENT>::build_spine(const unsigned ex,
-                                                  const unsigned ey,
-                                                  const unsigned ly,
-                                                  const unsigned lx) {
-
+void SingleLayerSpineMesh3D<ELEMENT>::build_spine(const unsigned e,
+                                                  const unsigned n) {
   // Read out the number of elements in the x-direction
-  const unsigned nx = this->Nx;
+  unsigned n_x = this->Nx;
   // Read out the number of elements in the y-direction
-  const unsigned ny = this->Ny;
+  unsigned n_y = this->Ny;
   // Read out the number of elements in the z-direction
-  const unsigned nz = this->Nz;
+  unsigned n_z = this->Nz;
   // Read out number of linear points in the element
-  const unsigned np = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
+  unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
-  // Find the element number
-  const unsigned e = ex + ey * nx;
-  // Find the node number
-  const unsigned n = lx + ly * np;
+  // create a new spine
+  Spine *new_spine_pt = new Spine(1.0);
+  Spine_pt.push_back(new_spine_pt);
 
-  // Check if this is a truely new spine or the image of a periodic one that
-  // has already been created
-  // NOTE: finding the periodic counterpart relies on creating the spines in
-  //       a particular order (see build_single_layer_mesh).
-  bool is_periodic = true;
-  Spine *periodic_spine_pt = nullptr;
-  if (this->Xperiodic && this->Yperiodic && (e == nx * ny - 1) &&
-      (lx == np - 1) && (ly == np - 1)) {
-    // corner case where the mesh is periodic in both x and y
-    periodic_spine_pt = Spine_pt[0];
-  } else if (this->Xperiodic && (ex == nx - 1) && (lx == np - 1)) {
-    // periodic in x
-    // have to treat the first row differently
-    if (ey == 0) {
-      periodic_spine_pt = Spine_pt[ly * np];
-    } else {
-      // number of spines in the first row of elements
-      unsigned row0 = np * (np - 1) * nx;
-      // number of spines in all subsequent rows of elements
-      unsigned row = (np - 1) * (np - 1) * nx;
+  // Add the node at z = Zmin (usually this would be the top node of the
+  // element down but for the bottom element there is no previous
+  // element)
+  {
+    // Get pointer to node
+    SpineNode *nod_pt = element_node_pt(e, n);
+    // Set the pointer to the spine
+    nod_pt->spine_pt() = new_spine_pt;
+    // Set the fraction
+    nod_pt->fraction() = 0.0;
+    // Pointer to the mesh that implements the update fct
+    nod_pt->spine_mesh_pt() = this;
 
-      periodic_spine_pt = Spine_pt[(ly - 1) * np + row0 + row * (ey - 1)];
-    }
-  } else if (this->Yperiodic && (ey == ny - 1) && (ly == np - 1)) {
-    // periodic in y
-    // have to treat the first column differently
-    if (ex == 0) {
-      periodic_spine_pt = Spine_pt[lx];
-    } else {
-      // number of spines in the first element
-      unsigned el0 = np * np;
-      // number of spines in all subsequent elements
-      unsigned el = (np - 1) * np;
-
-      periodic_spine_pt = Spine_pt[(lx - 1) + el0 + el * (ex - 1)];
-    }
-  } else {
-    is_periodic = false;
+    // Check that the node is not on a periodic boundary
+    assert(!this->Xperiodic || (nod_pt->x(0) != this->Xmax));
+    assert(!this->Yperiodic || (nod_pt->x(1) != this->Ymax));
   }
 
-  // catch the corner case where the mesh is periodic in both x and y
-
-  if (!is_periodic) {
-    // NON-PERIODIC SPINE
-
-    // Assign the new spine with length h
-    // TODO: should the height be h or 1.0?
-    Spine *new_spine_pt = new Spine(1.0);
-    Spine_pt.push_back(new_spine_pt);
-
-    // Add the node at z = Zmin (usually this would be the top node of the
-    // element down but for the bottom element there is no previous element)
-    {
+  // Loop vertically up the elements
+  for (unsigned long k = 0; k < n_z; k++) {
+    // Loop over the vertical nodes (apart from the first, because it is
+    // the same as the last from the element down)
+    for (unsigned l3 = 1; l3 < n_p; l3++) {
       // Get pointer to node
-      SpineNode *nod_pt = element_node_pt(e, n);
+      SpineNode *nod_pt =
+          element_node_pt(e + k * n_x * n_y, l3 * n_p * n_p + n);
       // Set the pointer to the spine
       nod_pt->spine_pt() = new_spine_pt;
       // Set the fraction
-      nod_pt->fraction() = 0.0;
+      nod_pt->fraction() = (double(k + l3) / double(n_p - 1)) / double(n_z);
       // Pointer to the mesh that implements the update fct
       nod_pt->spine_mesh_pt() = this;
+    } // end l3-loop over vertical nodes
+  }   // end k-loop over vertical elements
+}
 
-      // Check that the node is not on a periodic boundary
-      assert(!this->Xperiodic || (nod_pt->x(0) != this->Xmax));
-      assert(!this->Yperiodic || (nod_pt->x(1) != this->Ymax));
-    }
+template <class ELEMENT>
+void SingleLayerSpineMesh3D<ELEMENT>::build_spine_periodic_x(const unsigned e,
+                                                             const unsigned n) {
+  // Read out the number of elements in the x-direction
+  unsigned n_x = this->Nx;
+  // Read out the number of elements in the y-direction
+  unsigned n_y = this->Ny;
+  // Read out the number of elements in the z-direction
+  unsigned n_z = this->Nz;
+  // Read out number of linear points in the element
+  unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
-    // Loop vertically up the spine
-    // Loop over the elements
-    for (unsigned long k = 0; k < nz; k++) {
-      // Loop over the vertical nodes (apart from the first, because it is the
-      // same as the last from the element down)
-      for (unsigned l3 = 1; l3 < np; l3++) {
-        // Get pointer to node
-        SpineNode *nod_pt = element_node_pt(e + k * nx * ny, l3 * np * np + n);
-        // Set the pointer to the spine
-        nod_pt->spine_pt() = new_spine_pt;
-        // Set the fraction
-        nod_pt->fraction() = (double(k + l3) / double(np - 1)) / double(nz);
-        // Pointer to the mesh that implements the update fct
-        nod_pt->spine_mesh_pt() = this;
-      } // end l3-loop over vertical nodes
-    }   // end k-loop over vertical elements
-  } else {
-    // PERIODIC SPINE
-    // should not create a new spine since it is periodic
+  // find the corresponding element on the left boundary
+  unsigned e_left = e - (this->Nx - 1);
+  // find the corresponding node on the left boundary
+  unsigned n_left = n - (this->Np - 1);
+  // find the corresponding spine on the left boundary
+  Spine *spine_pt_left = element_node_pt(e_left, n_left)->spine_pt();
 
-    // find the periodic element/node indices
-    unsigned periodic_e = -1;
-    unsigned periodic_n = -1;
-    this->get_periodic_element_node(e, n, &periodic_e, &periodic_n);
+  // check that this matches the one that we expect
+  Spine *spine_pt_test = Spine_pt[e_left * (this->Np - 1) * (this->Np - 1) +
+                                  (n_left / this->Np) * (this->Np - 1)];
+  assert(spine_pt_left == spine_pt_test);
 
-    // Add the node at z = Zmin (usually this would be the top node of the
-    // element down but for the bottom element there is no previous element)
-    {
-      // Get pointer to node
-      SpineNode *nod_pt = element_node_pt(e, n);
-      // Get the pointer to its periodic counterpart
-      SpineNode *periodic_nod_pt = element_node_pt(periodic_e, periodic_n);
-      // Set the pointer to the spine
-      nod_pt->spine_pt() = periodic_spine_pt;
-      // Set the fraction (fixed to the periodic counterpart)
-      nod_pt->fraction() = periodic_nod_pt->fraction();
-      // Pointer to the mesh that implements the update fct (fixed to the
-      // periodic counterpart)
-      nod_pt->spine_mesh_pt() = periodic_nod_pt->spine_mesh_pt();
-    }
+  // Add the node at z = Zmin (usually this would be the top node of the
+  // element down but for the bottom element there is no previous
+  // element)
+  {
+    // Get pointer to node
+    SpineNode *nod_pt = element_node_pt(e, n);
+    // Get pointer to corresponding node on the left boundary
+    SpineNode *nod_pt_left = element_node_pt(e_left, n_left);
+    // Set the pointer to the spine
+    nod_pt->spine_pt() = spine_pt_left;
+    // Set the fraction
+    nod_pt->fraction() = nod_pt_left->fraction();
+    // Pointer to the mesh that implements the update fct
+    nod_pt->spine_mesh_pt() = nod_pt_left->spine_mesh_pt();
 
-    // Loop vertically up the spine
-    // Loop over the elements
-    for (unsigned long k = 0; k < nz; k++) {
-      // Loop over the vertical nodes (apart from the first, because it is the
-      // same as the last from the element down)
-      for (unsigned l3 = 1; l3 < np; l3++) {
-        // Get pointer to node
-        SpineNode *nod_pt = element_node_pt(e + k * nx * ny, l3 * np * np + n);
-        // Get the pointer to its periodic counterpart
-        SpineNode *periodic_nod_pt = element_node_pt(periodic_e + k * nx * ny,
-                                                     l3 * np * np + periodic_n);
-        // Set the pointer to the spine
-        nod_pt->spine_pt() = periodic_spine_pt;
-        // Set the fraction (fixed to the periodic counterpart)
-        nod_pt->fraction() = periodic_nod_pt->fraction();
-        // Pointer to the mesh that implements the update fct (fixed to the
-        // periodic counterpart)
-        nod_pt->spine_mesh_pt() = periodic_nod_pt->spine_mesh_pt();
-      } // end l3-loop over vertical nodes
-    }   // end k-loop over vertical elements
+    // Check that the node is on a periodic boundary
+    assert(nod_pt->x(0) == this->Xmax);
+    assert(nod_pt_left->x(0) == this->Xmin);
+    assert(nod_pt->x(1) == nod_pt_left->x(1));
+    assert(nod_pt->x(2) == nod_pt_left->x(2));
   }
+
+  // Loop vertically up the elements
+  for (unsigned long k = 0; k < n_z; k++) {
+    // Loop over the vertical nodes (apart from the first, because it is
+    // the same as the last from the element down)
+    for (unsigned l3 = 1; l3 < n_p; l3++) {
+      // Get pointer to node
+      SpineNode *nod_pt =
+          element_node_pt(e + k * n_x * n_y, l3 * n_p * n_p + n);
+      // Get pointer to corresponding node on the left boundary
+      SpineNode *nod_pt_left =
+          element_node_pt(e_left + k * n_x * n_y, l3 * n_p * n_p + n_left);
+      // Set the pointer to the spine
+      nod_pt->spine_pt() = spine_pt_left;
+      // Set the fraction
+      nod_pt->fraction() = nod_pt_left->fraction();
+      // Pointer to the mesh that implements the update fct
+      nod_pt->spine_mesh_pt() = nod_pt_left->spine_mesh_pt();
+
+      // Check that the node is on a periodic boundary
+      assert(nod_pt->x(0) == this->Xmax);
+      assert(nod_pt_left->x(0) == this->Xmin);
+      assert(nod_pt->x(1) == nod_pt_left->x(1));
+      assert(nod_pt->x(2) == nod_pt_left->x(2));
+    } // end l3-loop over vertical nodes
+  }   // end k-loop over vertical elements
+}
+
+template <class ELEMENT>
+void SingleLayerSpineMesh3D<ELEMENT>::build_spine_periodic_y(const unsigned e,
+                                                             const unsigned n) {
+  // Read out the number of elements in the x-direction
+  unsigned n_x = this->Nx;
+  // Read out the number of elements in the y-direction
+  unsigned n_y = this->Ny;
+  // Read out the number of elements in the z-direction
+  unsigned n_z = this->Nz;
+  // Read out number of linear points in the element
+  unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
+
+  // find the corresponding element on the front boundary
+  unsigned e_front = e % n_x;
+  // find the corresponding node on the front boundary
+  unsigned n_front = n % n_p;
+  // find the corresponding spine on the front boundary
+  Spine *spine_pt_front = element_node_pt(e_front, n_front)->spine_pt();
+
+  // check that this matches the one that we expect
+  Spine *spine_pt_test = Spine_pt[e_front * (this->Np - 1) * (this->Np - 1) + n_front];
+  assert(spine_pt_front == spine_pt_test);
+
+  // Add the node at z = Zmin (usually this would be the top node of the
+  // element down but for the bottom element there is no previous
+  // element)
+  {
+    // Get pointer to node
+    SpineNode *nod_pt = element_node_pt(e, n);
+    // Get pointer to corresponding node on the front boundary
+    SpineNode *nod_pt_front = element_node_pt(e_front, n_front);
+    // Set the pointer to the spine
+    nod_pt->spine_pt() = spine_pt_front;
+    // Set the fraction
+    nod_pt->fraction() = nod_pt_front->fraction();
+    // Pointer to the mesh that implements the update fct
+    nod_pt->spine_mesh_pt() = nod_pt_front->spine_mesh_pt();
+
+    // Check that the node is on a periodic boundary
+    assert(nod_pt->x(1) == this->Ymax);
+    assert(nod_pt_front->x(1) == this->Ymin);
+    assert(nod_pt->x(0) == nod_pt_front->x(0));
+    assert(nod_pt->x(2) == nod_pt_front->x(2));
+  }
+
+  // Loop vertically up the elements
+  for (unsigned long k = 0; k < n_z; k++) {
+    // Loop over the vertical nodes (apart from the first, because it is
+    // the same as the last from the element down)
+    for (unsigned l3 = 1; l3 < n_p; l3++) {
+      // Get pointer to node
+      SpineNode *nod_pt =
+          element_node_pt(e + k * n_x * n_y, l3 * n_p * n_p + n);
+      // Get pointer to corresponding node on the front boundary
+      SpineNode *nod_pt_front =
+          element_node_pt(e_front + k * n_x * n_y, l3 * n_p * n_p + n_front);
+      // Set the pointer to the spine
+      nod_pt->spine_pt() = spine_pt_front;
+      // Set the fraction
+      nod_pt->fraction() = nod_pt_front->fraction();
+      // Pointer to the mesh that implements the update fct
+      nod_pt->spine_mesh_pt() = nod_pt_front->spine_mesh_pt();
+
+      // Check that the node is on a periodic boundary
+      assert(nod_pt->x(1) == this->Ymax);
+      assert(nod_pt_front->x(1) == this->Ymin);
+      assert(nod_pt->x(0) == nod_pt_front->x(0));
+      assert(nod_pt->x(2) == nod_pt_front->x(2));
+    } // end l3-loop over vertical nodes
+  }   // end k-loop over vertical elements
+}
+
+template <class ELEMENT>
+void SingleLayerSpineMesh3D<ELEMENT>::build_spine_periodic_xy(
+    const unsigned e, const unsigned n) {
+  // Read out the number of elements in the x-direction
+  unsigned n_x = this->Nx;
+  // Read out the number of elements in the y-direction
+  unsigned n_y = this->Ny;
+  // Read out the number of elements in the z-direction
+  unsigned n_z = this->Nz;
+  // Read out number of linear points in the element
+  unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
+
+  // find the corresponding element at the front left corner
+  unsigned e_fl = 0;
+  // find the corresponding node at the front left corner
+  unsigned n_fl = 0;
+  // find the corresponding spine at the front left corner
+  Spine *spine_pt_fl = element_node_pt(e_fl, n_fl)->spine_pt();
+
+  // check that this matches the one that we expect
+  Spine *spine_pt_test = Spine_pt[0];
+  assert(spine_pt_fl == spine_pt_test);
+
+  // Add the node at z = Zmin (usually this would be the top node of the
+  // element down but for the bottom element there is no previous
+  // element)
+  {
+    // Get pointer to node
+    SpineNode *nod_pt = element_node_pt(e, n);
+    // Get pointer to corresponding node at the front left corner
+    SpineNode *nod_pt_fl = element_node_pt(e_fl, n_fl);
+    // Set the pointer to the spine
+    nod_pt->spine_pt() = spine_pt_fl;
+    // Set the fraction
+    nod_pt->fraction() = nod_pt_fl->fraction();
+    // Pointer to the mesh that implements the update fct
+    nod_pt->spine_mesh_pt() = nod_pt_fl->spine_mesh_pt();
+
+    // Check that the node is on a doubley periodic boundary
+    assert(nod_pt->x(0) == this->Xmax);
+    assert(nod_pt->x(1) == this->Ymax);
+    assert(nod_pt_fl->x(0) == this->Xmin);
+    assert(nod_pt_fl->x(1) == this->Ymin);
+    assert(nod_pt->x(2) == nod_pt_fl->x(2));
+  }
+
+  // Loop vertically up the elements
+  for (unsigned long k = 0; k < n_z; k++) {
+    // Loop over the vertical nodes (apart from the first, because it is
+    // the same as the last from the element down)
+    for (unsigned l3 = 1; l3 < n_p; l3++) {
+      // Get pointer to node
+      SpineNode *nod_pt =
+          element_node_pt(e + k * n_x * n_y, l3 * n_p * n_p + n);
+      // Get pointer to corresponding node at the front left corner
+      SpineNode *nod_pt_fl =
+          element_node_pt(e_fl + k * n_x * n_y, l3 * n_p * n_p + n_fl);
+      // Set the pointer to the spine
+      nod_pt->spine_pt() = spine_pt_fl;
+      // Set the fraction
+      nod_pt->fraction() = nod_pt_fl->fraction();
+      // Pointer to the mesh that implements the update fct
+      nod_pt->spine_mesh_pt() = nod_pt_fl->spine_mesh_pt();
+
+      // Check that the node is on a periodic boundary
+      assert(nod_pt->x(0) == this->Xmax);
+      assert(nod_pt->x(1) == this->Ymax);
+      assert(nod_pt_fl->x(0) == this->Xmin);
+      assert(nod_pt_fl->x(1) == this->Ymin);
+      assert(nod_pt->x(2) == nod_pt_fl->x(2));
+    } // end l3-loop over vertical nodes
+  }   // end k-loop over vertical elements
 }
 
 template <class ELEMENT>
@@ -268,60 +399,90 @@ void SingleLayerSpineMesh3D<ELEMENT>::build_single_layer_mesh(
     Spine_pt.reserve(((n_p - 1) * n_x + 1) * ((n_p - 1) * n_y + 1));
   }
 
-  // Now we loop over all the elements and attach the spines
-  // TODO: the indexing would be much simpler if we just did the lower-left
-  //       (np-1) x (np-1) spines for each element and treated the right/upper
-  //       boundary nodes as special cases rather than the other way around
+  // loop over all of the elements
+  for (unsigned i = 0; i < n_y; i++) {
+    for (unsigned j = 0; j < n_x; j++) {
+      unsigned e = j + i * n_x; // linear element number
 
-  // FIRST ELEMENT: Element 0
-  // Loop over the nodes on the base of the element
-  for (unsigned l1 = 0; l1 < n_p; l1++) {   // y loop over the nodes
-    for (unsigned l2 = 0; l2 < n_p; l2++) { // x loop over the nodes
-      build_spine(0, 0, l1, l2);
-    } // end l2-loop over x nodes
-  }   // end l1-loop over y nodes
-  // END OF FIRST ELEMENT
+      // for each element we add the front left np-1 x np-1 spines (so that they
+      // don't overlap with those of a previous element)
+      for (unsigned l1 = 0; l1 < n_p - 1; l1++) {
+        for (unsigned l2 = 0; l2 < n_p - 1; l2++) {
+          unsigned n = l2 + l1 * n_p; // linear node number
 
-  // LOOP OVER OTHER ELEMENTS IN THE FIRST ROW
-  //-----------------------------------------
-  // The procedure is the same but we have to identify the
-  // before defined spines for not defining them two times
-  for (unsigned j = 1; j < n_x; j++) { // loop over elements in the first row
-    for (unsigned l1 = 0; l1 < n_p; l1++) { // y loop over the nodes
-      // First we copy the last row of nodes into the
-      // first row of the new element (and extend to the third dimension)
-      for (unsigned l2 = 1; l2 < n_p; l2++) { // x loop over the nodes
-        build_spine(j, 0, l1, l2);
-      } // end l2-loop over x nodes
-    }   // end l1-loop over y nodes
-  }     // end j-loop over elements in the first row
-  // END OF FIRST ROW
+          this->build_spine(e, n);
+        }
+      } // end l1-loop over y nodes
+    }
+  } // end i-loop over y nodes
 
-  // REST OF THE ELEMENTS
-  // Now we loop over the rest of the elements.
-  // We will separate the first of each row being al the rest equal
-  for (unsigned long i = 1; i < n_y; i++) {
-    // FIRST ELEMENT OF THE ROW
+  // the main loop over the elements has missed out the right/rear boundary
+  // nodes of the last row/column of elements
 
-    // First line of nodes is copied from the element of the bottom
-    for (unsigned l1 = 1; l1 < n_p; l1++) {   // y loop over the nodes
-      for (unsigned l2 = 0; l2 < n_p; l2++) { // x loop over the nodes
-        build_spine(0, i, l1, l2);
-      } // end l2-loop over x nodes
-    }   // end l1-loop over y nodes
-    // END OF FIRST ELEMENT OF THE ROW
+  // right boundary (2)
+  {
+    unsigned j = n_x - 1;  // last column of elements
+    unsigned l2 = n_p - 1; // last column of nodes inside each element
 
-    // REST OF THE ELEMENTS OF THE ROW
-    for (unsigned j = 1; j < n_x; j++) {
-      // First line of nodes is copied from the element of the bottom
-      for (unsigned l1 = 1; l1 < n_p; l1++) {   // y loop over the nodes
-        for (unsigned l2 = 1; l2 < n_p; l2++) { // x loop over the nodes
-          build_spine(j, i, l1, l2);
-        } // end l2-loop over x nodes
-      }   // end l1-loop over y nodes
-    }     // end j-loop over elements in the row
-    // END OF REST OF THE ELEMENTS OF THE ROW
-  } // end i-loop over rows
+    // loop over the last column of elements
+    for (unsigned i = 0; i < n_y; i++) {
+      unsigned e = j + i * n_x; // linear element number
+
+      // loop over the last column of nodes inside each element
+      for (unsigned l1 = 0; l1 < n_p - 1; l1++) {
+        unsigned n = l2 + l1 * n_p; // linear node number
+
+        if (this->Xperiodic) {
+          this->build_spine_periodic_x(e, n);
+        } else {
+          this->build_spine(e, n);
+        }
+      }
+    }
+  }
+
+  // rear boundary (3)
+  {
+    unsigned i = n_y - 1;  // last row of elements
+    unsigned l1 = n_p - 1; // last row of nodes inside each element
+
+    // loop over the last row of elements
+    for (unsigned j = 0; j < n_x; j++) {
+      unsigned e = j + i * n_x; // linear element number
+
+      // loop over the last column of nodes inside each element
+      for (unsigned l2 = 0; l2 < n_p - 1; l2++) {
+        unsigned n = l2 + l1 * n_p; // linear node number
+
+        if (this->Yperiodic) {
+          this->build_spine_periodic_y(e, n);
+        } else {
+          this->build_spine(e, n);
+        }
+      }
+    }
+  }
+
+  // right/rear node
+  {
+    unsigned i = n_y - 1;  // last row of elements
+    unsigned j = n_x - 1;  // last column of elements
+    unsigned l1 = n_p - 1; // last row of nodes inside each element
+    unsigned l2 = n_p - 1; // last column of nodes inside each element
+
+    unsigned e = j + i * n_x;   // linear element number
+    unsigned n = l2 + l1 * n_p; // linear node number
+
+    if (this->Xperiodic && this->Yperiodic) {
+      this->build_spine_periodic_xy(e, n);
+    } else if (this->Xperiodic) {
+      this->build_spine_periodic_x(e, n);
+    } else if (this->Yperiodic) {
+      this->build_spine_periodic_y(e, n);
+    } else {
+      this->build_spine(e, n);
+    }
+  }
 }
 
 #endif // SINGLELAYERSPINEMESH3D_H
