@@ -1,4 +1,4 @@
-#define FILM_PROBLEM (0)
+#define FILM_PROBLEM (1)
 
 #if FILM_PROBLEM
 
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 #define FLUID_ELEMENT QTaylorHoodElement<2>
 #define FLUID_ELEMENT_3D QTaylorHoodElement<3>
 
-  int ndim = 3;
+  int ndim = 2;
 
   if (ndim == 2) {
     // Create the control problem

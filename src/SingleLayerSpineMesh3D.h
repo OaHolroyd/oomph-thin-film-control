@@ -259,13 +259,13 @@ void SingleLayerSpineMesh3D<ELEMENT>::build_single_layer_mesh(
   //---------------------------------------------------------
   // Allocate store for the spines:
   if (this->Xperiodic && this->Yperiodic) {
-    Spine_pt.reserve((n_p - 1) * n_x * n_y);
+    Spine_pt.reserve((n_p - 1) * n_x * (n_p - 1) * n_y);
   } else if (this->Xperiodic) {
-    Spine_pt.reserve((n_p - 1) * n_x * (n_y + 1));
+    Spine_pt.reserve((n_p - 1) * n_x * ((n_p - 1) * n_y + 1));
   } else if (this->Yperiodic) {
-    Spine_pt.reserve((n_p - 1) * (n_x + 1) * n_y);
+    Spine_pt.reserve(((n_p - 1) * n_x + 1) * (n_p - 1) * n_y);
   } else {
-    Spine_pt.reserve((n_p - 1) * (n_x + 1) * (n_y + 1));
+    Spine_pt.reserve(((n_p - 1) * n_x + 1) * ((n_p - 1) * n_y + 1));
   }
 
   // Now we loop over all the elements and attach the spines
