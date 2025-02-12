@@ -68,7 +68,7 @@ SingleLayerSpineMesh3D<ELEMENT>::SingleLayerSpineMesh3D(
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const double &lx, const double &ly, const double &h,
     TimeStepper *time_stepper_pt)
-    : CubicBrickMesh<ELEMENT>(nx, ny, nz, lx, ly, h, time_stepper_pt) {
+    : CubicBrickMesh<ELEMENT>(nx, ny, nz, lx, ly, h, false, time_stepper_pt) {
 
   // Mesh can only be built with 3D Qelements.
   MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
@@ -87,7 +87,7 @@ SingleLayerSpineMesh3D<ELEMENT>::SingleLayerSpineMesh3D(
     const bool &periodic_in_x, const bool &periodic_in_y,
     TimeStepper *time_stepper_pt)
     : CubicBrickMesh<ELEMENT>(nx, ny, nz, lx, ly, h, periodic_in_x,
-                              periodic_in_y, time_stepper_pt) {
+                              periodic_in_y, false, time_stepper_pt) {
 
   // Mesh can only be built with 3D Qelements.
   MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
@@ -377,6 +377,7 @@ void SingleLayerSpineMesh3D<ELEMENT>::build_single_layer_mesh(
   MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
 
   // build the underlying brick mesh
+  fprintf(stderr, "build_single_layer_mesh calling build mesh\n");
   CubicBrickMesh<ELEMENT>::build_mesh(time_stepper_pt);
 
   // Read out the number of elements in the x-direction

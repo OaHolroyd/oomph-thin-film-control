@@ -142,14 +142,14 @@ public:
       // Add elements to the mesh
       Surface_mesh_pt->add_element_pt(surface_element_pt);
       // Assign the capillary number to the free surface
-      surface_element_pt->ca_pt() = &Global_Physical_Variables::Ca;
+      surface_element_pt->ca_pt() = &Global_Physical_Variables_3d::Ca;
     }
   } //end of make_free_surface_elements
 
   /// Complete the build of the problem setting all standard
   /// parameters and boundary conditions
   void complete_build() {
-    using namespace Global_Physical_Variables;
+    using namespace Global_Physical_Variables_3d;
 
     // Complete the build of the fluid elements by passing physical parameters
     // Find the number of bulk elements
@@ -178,6 +178,8 @@ public:
         Bulk_mesh_pt->boundary_node_pt(0, j)->pin(0);
         Bulk_mesh_pt->boundary_node_pt(0, j)->pin(1);
         Bulk_mesh_pt->boundary_node_pt(0, j)->pin(2);
+
+        fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j, Bulk_mesh_pt->boundary_node_pt(0, j)->x(0), Bulk_mesh_pt->boundary_node_pt(0, j)->x(1), Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
       }
     }
 

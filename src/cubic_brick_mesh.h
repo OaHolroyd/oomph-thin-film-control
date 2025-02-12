@@ -60,6 +60,7 @@ public:
   /// Constructor: Pass the number of elements in the x, y, and z directions
   CubicBrickMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
                  const double &lx, const double &ly, const double &lz,
+                 const bool &build,
                  TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper)
       : Nx(nx), Ny(ny), Nz(nz), Xmin(0.0), Xmax(lx), Ymin(0.0), Ymax(ly),
         Zmin(0.0), Zmax(lz), Xperiodic(false), Yperiodic(false) {
@@ -67,13 +68,16 @@ public:
     MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
 
     // Call the generic build function
-    build_mesh(time_stepper_pt);
+    if (build) {
+      build_mesh(time_stepper_pt);
+    }
   }
 
   /// Constructor: Pass the number of elements in the x, y, and z directions
   CubicBrickMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
                  const double &lx, const double &ly, const double &lz,
                  const bool &periodic_in_x, const bool &periodic_in_y,
+                 const bool &build,
                  TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper)
       : Nx(nx), Ny(ny), Nz(nz), Xmin(0.0), Xmax(lx), Ymin(0.0), Ymax(ly),
         Zmin(0.0), Zmax(lz), Xperiodic(periodic_in_x),
@@ -82,7 +86,9 @@ public:
     MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
 
     // Call the generic build function
-    build_mesh(time_stepper_pt);
+    if (build) {
+      build_mesh(time_stepper_pt);
+    }
   }
 
   /// Access function for number of elements in x directions
@@ -276,6 +282,8 @@ void CubicBrickMesh<ELEMENT>::build_mesh(TimeStepper *time_stepper_pt) {
   // Mesh can only be built with 3D Qelements.
   MeshChecker::assert_geometric_element<QElementGeometricBase, ELEMENT>(3);
 
+  fprintf(stderr, "calling build mesh\n");
+
   if ((Nx == 1) || (Ny == 1) || (Nz == 1)) {
     std::ostringstream error_message;
     error_message << "SimpleCubicMesh needs at least two elements in each,\n"
@@ -289,17 +297,21 @@ void CubicBrickMesh<ELEMENT>::build_mesh(TimeStepper *time_stepper_pt) {
   set_nboundary(6);
 
   // Allocate the store for the elements
-  Element_pt.resize(Nx * Ny * Nz);
+  unsigned total_nelements = Nx * Ny * Nz;
+  Element_pt.resize(total_nelements);
   // Create first element
   unsigned element_num = 0;
   Element_pt[element_num] = new ELEMENT;
+  fprintf(stderr, "space for %d elements\n", total_nelements);
 
   // Read out the number of linear points in the element
   Np = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
   // Can now allocate the store for the nodes
-  Node_pt.resize((1 + (Np - 1) * Nx) * (1 + (Np - 1) * Ny) *
-                 (1 + (Np - 1) * Nz));
+  unsigned total_nnodes =
+      (1 + (Np - 1) * Nx) * (1 + (Np - 1) * Ny) * (1 + (Np - 1) * Nz);
+  Node_pt.resize(total_nnodes);
+  fprintf(stderr, "space for %d nodes\n", total_nnodes);
 
   // Set up geometrical data
   //------------------------
@@ -5238,6 +5250,9 @@ void CubicBrickMesh<ELEMENT>::build_mesh(TimeStepper *time_stepper_pt) {
   // Setup lookup scheme that establishes which elements are located
   // on the mesh boundaries
   setup_boundary_element_info();
+
+  fprintf(stderr, "created %d elements\n", element_num);
+  fprintf(stderr, "created %ld nodes\n", node_count);
 }
 
 #endif // CUBIC_BRICK_MESH_H
