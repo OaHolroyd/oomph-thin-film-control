@@ -60,7 +60,7 @@ public:
   /// Constructor: Pass the number of elements in the x, y, and z directions
   CubicBrickMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
                  const double &lx, const double &ly, const double &lz,
-                 const bool &build,
+                 const bool &build = true,
                  TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper)
       : Nx(nx), Ny(ny), Nz(nz), Xmin(0.0), Xmax(lx), Ymin(0.0), Ymax(ly),
         Zmin(0.0), Zmax(lz), Xperiodic(false), Yperiodic(false) {
@@ -77,7 +77,7 @@ public:
   CubicBrickMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
                  const double &lx, const double &ly, const double &lz,
                  const bool &periodic_in_x, const bool &periodic_in_y,
-                 const bool &build,
+                 const bool &build = true,
                  TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper)
       : Nx(nx), Ny(ny), Nz(nz), Xmin(0.0), Xmax(lx), Ymin(0.0), Ymax(ly),
         Zmin(0.0), Zmax(lz), Xperiodic(periodic_in_x),

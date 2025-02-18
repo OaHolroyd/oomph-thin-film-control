@@ -6,11 +6,11 @@
 #define CONTROLLEDFILMPROBLEM3D_H
 
 // Standard C++ library includes
-#include <iostream>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
-#include <cmath>
 
 // Finite-Element library routines
 #include "generic.h"
@@ -24,13 +24,12 @@ using namespace std;
 
 using namespace oomph;
 
-
 //=====================================================================
 /// Generic problem class that will form the base class for both
 /// spine and elastic mesh-updates of the problem.
 /// Templated by the bulk element and interface element types
 //====================================================================
-template<class ELEMENT, class INTERFACE_ELEMENT>
+template <class ELEMENT, class INTERFACE_ELEMENT>
 class ControlledFilmProblem3D : public Problem {
 protected:
   /// Bulk fluid mesh
@@ -58,14 +57,13 @@ public:
   /// Information for the control system
   int nx_control; // number of points in the x-direction of the control system
   int ny_control; // number of points in the y-direction of the control system
-  int m_control; // number of actuators
-  int p_control; // number of observers
+  int m_control;  // number of actuators
+  int p_control;  // number of observers
 
   /// record time, number of time steps, and number of output steps
   double time;
   int step;
   int out_step;
-
 
   /**
    * Constructor for the controlled film problem
@@ -75,7 +73,8 @@ public:
    * @param m_control the number of actuators
    * @param p_control the number of observers
    */
-  ControlledFilmProblem3D(const int &nx_control, const int &ny_control, const int &m_control, const int &p_control = 0) {
+  ControlledFilmProblem3D(const int &nx_control, const int &ny_control,
+                          const int &m_control, const int &p_control = 0) {
     // Set up the output directory (always delete the old one)
     std::filesystem::path out_dir = std::filesystem::path("output");
     if (std::filesystem::exists(out_dir)) {
@@ -121,9 +120,8 @@ public:
    * @param out_step the number of timesteps between outputs
    * @param control_strategy the control strategy to use (0 for none)
    */
-  void timestep(
-    const double &dt, const unsigned &nsteps, int out_step = 1, int control_strategy = 0
-  );
+  void timestep(const double &dt, const unsigned &nsteps, int out_step = 1,
+                int control_strategy = 0);
 
   // Make the free surface elements on the top surface
   void make_free_surface_elements() {
@@ -135,16 +133,15 @@ public:
     unsigned n_boundary_element = Bulk_mesh_pt->nboundary_element(b);
     // Loop over the elements and create the appropriate interface elements
     for (unsigned e = 0; e < n_boundary_element; e++) {
-      INTERFACE_ELEMENT *surface_element_pt = new INTERFACE_ELEMENT(
-        Bulk_mesh_pt->boundary_element_pt(b, e),
-        Bulk_mesh_pt->face_index_at_boundary(b, e)
-      );
+      INTERFACE_ELEMENT *surface_element_pt =
+          new INTERFACE_ELEMENT(Bulk_mesh_pt->boundary_element_pt(b, e),
+                                Bulk_mesh_pt->face_index_at_boundary(b, e));
       // Add elements to the mesh
       Surface_mesh_pt->add_element_pt(surface_element_pt);
       // Assign the capillary number to the free surface
       surface_element_pt->ca_pt() = &Global_Physical_Variables_3d::Ca;
     }
-  } //end of make_free_surface_elements
+  } // end of make_free_surface_elements
 
   /// Complete the build of the problem setting all standard
   /// parameters and boundary conditions
@@ -156,45 +153,100 @@ public:
     unsigned n_element = Bulk_mesh_pt->nelement();
     // Loop over all the fluid elements
     for (unsigned e = 0; e < n_element; e++) {
-      //Cast to a fluid element
+      // Cast to a fluid element
       ELEMENT *temp_pt = dynamic_cast<ELEMENT *>(Bulk_mesh_pt->element_pt(e));
 
-      //Set the Reynolds number
+      // Set the Reynolds number
       temp_pt->re_pt() = &Re;
-      //The Strouhal number is 1, so ReSt = Re
+      // The Strouhal number is 1, so ReSt = Re
       temp_pt->re_st_pt() = &Re;
-      //Set the Reynolds number / Froude number
+      // Set the Reynolds number / Froude number
       temp_pt->re_invfr_pt() = &ReInvFr;
-      //Set the direction of gravity
+      // Set the direction of gravity
       temp_pt->g_pt() = &G;
     }
 
     //------------Set the boundary conditions for this problem----------
     {
-      //Loop over the bottom of the mesh (the wall of the channel)
-      unsigned n_node = Bulk_mesh_pt->nboundary_node(0);
+      // Loop over the bottom of the mesh (the wall of the channel)
+      unsigned b = 0;
+      unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
       for (unsigned j = 0; j < n_node; j++) {
         // No slip no penetration
-        Bulk_mesh_pt->boundary_node_pt(0, j)->pin(0);
-        Bulk_mesh_pt->boundary_node_pt(0, j)->pin(1);
-        Bulk_mesh_pt->boundary_node_pt(0, j)->pin(2);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
 
-        fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j, Bulk_mesh_pt->boundary_node_pt(0, j)->x(0), Bulk_mesh_pt->boundary_node_pt(0, j)->x(1), Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+        // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
       }
     }
 
+    {
+      // Loop over the front of the mesh (the side wall of the channel)
+      unsigned b = 1;
+      unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
+      for (unsigned j = 0; j < n_node; j++) {
+        // No slip no penetration
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
+
+        // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+      }
+    }
+
+    {
+      // Loop over the rear of the mesh (the side wall of the channel)
+      unsigned b = 3;
+      unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
+      for (unsigned j = 0; j < n_node; j++) {
+        // No slip no penetration
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
+
+        // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+      }
+    }
+
+    // // THIS IS FOR NON-PERIODIC BOUNDARIES (no slip/penetration on all walls)
+    // for (unsigned b = 0; b < 5; b++) {
+    //   // Loop over the bottom of the mesh (the wall of the channel)
+    //   unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
+    //   for (unsigned j = 0; j < n_node; j++) {
+    //     // No slip no penetration
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
+    //
+    //     // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+    //   }
+    // }
+
     // Attach the boundary conditions to the mesh
     std::cout << assign_eqn_numbers() << " in the main problem" << std::endl;
-  } //end of complete_build
+  } // end of complete_build
 
   /// Generic desructor to clean up the memory allocated in the problem
   ~ControlledFilmProblem3D() {
-    //Clear node storage and then delete mesh
+    // Clear node storage and then delete mesh
     this->Surface_mesh_pt->flush_node_storage();
     delete this->Surface_mesh_pt;
-    //Delete the bulk mesh (no need to clear node storage)
+    // Delete the bulk mesh (no need to clear node storage)
     delete this->Bulk_mesh_pt;
-    //Delete the time stepper
+    // Delete the time stepper
     delete this->time_stepper_pt();
 
     delete[] this->h;
@@ -203,10 +255,10 @@ public:
   }
 };
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int Kx, int Ky, double delta) {
-  //Load the namespace
+template <class ELEMENT, class INTERFACE_ELEMENT>
+void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
+    int Kx, int Ky, double delta) {
+  // Load the namespace
   using namespace Global_Physical_Variables_3d;
 
   // start at t = 0
@@ -214,7 +266,7 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int 
   step = 0;
   out_step = 0;
 
-  //Initially set all nodes to the Nusselt flat-film solution
+  // Initially set all nodes to the Nusselt flat-film solution
   {
     unsigned n_node = Bulk_mesh_pt->nnode();
     for (unsigned n = 0; n < n_node; n++) {
@@ -223,7 +275,9 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int 
       double z = Bulk_mesh_pt->node_pt(n)->x(2);
 
       // perturb the z values using the wavenumber and amplitude specified
-      Bulk_mesh_pt->node_pt(n)->x(2) *= 1.0 + delta * sin(Kx * 2.0 * M_PI * (x + 10.0) / Lx) * sin(Ky * 2.0 * M_PI * y / Lx);
+      Bulk_mesh_pt->node_pt(n)->x(2) *=
+          1.0 + delta * sin(Kx * 2.0 * M_PI * (x + 10.0) / Lx) *
+                    sin(Ky * 2.0 * M_PI * y / Lx);
 
       // set the velocity to the Nusselt flat-film solution
       Bulk_mesh_pt->node_pt(n)->set_value(0, z * (2.0 - z));
@@ -231,11 +285,11 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::initial_condition(int 
       Bulk_mesh_pt->node_pt(n)->set_value(2, 0.0);
     }
   }
-} //end of initial_condition
+} // end of initial_condition
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_control) {
+template <class ELEMENT, class INTERFACE_ELEMENT>
+void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
+    int use_control) {
   using namespace Global_Physical_Variables;
   // TODO: implement this
   // unsigned int j = 0; // keep track of where we are along the surface mesh
@@ -244,8 +298,10 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_contro
   //   double DX = Lx / n_control;
   //   double xi = (DX * (static_cast<double>(i) + 0.5));
   //
-  //   // loop over the free surface elements to find the one containing the point
-  //   //   assuming the surface elements are ordered in the x direction, we can start the search from the same place as
+  //   // loop over the free surface elements to find the one containing the
+  //   point
+  //   //   assuming the surface elements are ordered in the x direction, we can
+  //   start the search from the same place as
   //   //   we found the last point
   //   FaceElement *element;
   //   Node *n0 = nullptr, *n1 = nullptr;
@@ -289,8 +345,7 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_contro
   // }
 }
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
+template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   using namespace Global_Physical_Variables;
 
@@ -315,8 +370,7 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   file.close();
 }
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
+template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::output_mesh() {
   using namespace Global_Physical_Variables;
 
@@ -336,8 +390,7 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::output_mesh() {
   file.close();
 }
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
+template <class ELEMENT, class INTERFACE_ELEMENT>
 void prog_bar_print_3d(void *problem) {
   auto p = (ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT> *)(problem);
 
@@ -350,11 +403,10 @@ void prog_bar_print_3d(void *problem) {
   fprintf(stderr, " [t = %3.2f, dhmax = %5g]", p->time, max_dh);
 }
 
-
-template<class ELEMENT, class INTERFACE_ELEMENT>
+template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::timestep(
-  const double &dt, const unsigned &nsteps, int out_step, int control_strategy
-) {
+    const double &dt, const unsigned &nsteps, int out_step,
+    int control_strategy) {
   // Need to use the Global variables here
   using namespace Global_Physical_Variables;
 
@@ -366,11 +418,13 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::timestep(
   // if required, set up control variables
   if (control_strategy > 0) {
     throw std::runtime_error("Control not implemented in 3D");
-    // control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx, n_control, Re, Ca, Theta);
+    // control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx,
+    // n_control, Re, Ca, Theta);
   }
 
-  //Loop over the desired number of timesteps
-  ProgressBar pbar = ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>);
+  // Loop over the desired number of timesteps
+  ProgressBar pbar =
+      ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>);
   pbar.start();
   pbar.update(this->step);
   for (unsigned t = 0; t < nsteps; t++) {
@@ -404,7 +458,6 @@ void ControlledFilmProblem3D<ELEMENT, INTERFACE_ELEMENT>::timestep(
   }
 
   pbar.end(this);
-} //end of timestep
+} // end of timestep
 
-
-#endif //CONTROLLEDFILMPROBLEM3D_H
+#endif // CONTROLLEDFILMPROBLEM3D_H

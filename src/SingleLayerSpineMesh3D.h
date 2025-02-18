@@ -144,7 +144,7 @@ void SingleLayerSpineMesh3D<ELEMENT>::build_spine(const unsigned e,
       // Set the pointer to the spine
       nod_pt->spine_pt() = new_spine_pt;
       // Set the fraction
-      nod_pt->fraction() = (double(k + l3) / double(n_p - 1)) / double(n_z);
+      nod_pt->fraction() = (double(k) + double(l3) / double(n_p - 1)) / double(n_z);
       // Pointer to the mesh that implements the update fct
       nod_pt->spine_mesh_pt() = this;
     } // end l3-loop over vertical nodes

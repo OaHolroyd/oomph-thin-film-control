@@ -7,15 +7,39 @@
 
 #include "navier_stokes.h"
 #include "fluid_interface.h"
+// #include "meshes/single_layer_cubic_spine_mesh.h"
 
+#include "single_layer_cubic_spine_mesh.h"
 #include "SingleLayerSpineMesh3D.h"
 #include "Problem_3d.h"
 
 // ======================================================================
 //   Create a spine mesh for the problem
 // ======================================================================
+// template<class ELEMENT>
+// class SpineFilmMesh3D : public SingleLayerSpineMesh3D<ELEMENT> {
+// public:
+//   /**
+//    * Constructor for the spine inclined plane mesh
+//    *
+//    * @param nx Number of elements in the x direction
+//    * @param ny Number of elements in the y direction
+//    * @param nz Number of elements in the z direction
+//    * @param lx Length of the domain in the x direction
+//    * @param ly Length of the domain in the y direction
+//    * @param lz Length of the domain in the z direction
+//    * @param time_stepper_pt Pointer to the time stepper
+//    */
+//   SpineFilmMesh3D(
+//     const unsigned &nx, const unsigned &ny, const unsigned &nz,
+//     const double &lx, const double &ly, const double &lz,
+//     TimeStepper *time_stepper_pt
+//   ) : SingleLayerSpineMesh3D<ELEMENT>(nx, ny, nz, lx, ly, lz, false, false, time_stepper_pt) {
+//   } //end of constructor
+// };
+
 template<class ELEMENT>
-class SpineFilmMesh3D : public SingleLayerSpineMesh3D<ELEMENT> {
+class SpineFilmMesh3D : public SingleLayerCubicSpineMesh<ELEMENT> {
 public:
   /**
    * Constructor for the spine inclined plane mesh
@@ -32,7 +56,7 @@ public:
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const double &lx, const double &ly, const double &lz,
     TimeStepper *time_stepper_pt
-  ) : SingleLayerSpineMesh3D<ELEMENT>(nx, ny, nz, lx, ly, lz, true, true, time_stepper_pt) {
+  ) : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, true, false, time_stepper_pt) {
   } //end of constructor
 };
 
