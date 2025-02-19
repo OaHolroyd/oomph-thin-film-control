@@ -5,30 +5,34 @@
 #ifndef SPINEINCLINEDPLANEPROBLEM_H
 #define SPINEINCLINEDPLANEPROBLEM_H
 
-#include "meshes/single_layer_spine_mesh.h"
 #include "navier_stokes.h"
 #include "fluid_interface.h"
 
+#include "single_layer_cubic_spine_mesh.h"
 #include "Problem.h"
 
 // ======================================================================
 //   Create a spine mesh for the problem
 // ======================================================================
 template<class ELEMENT>
-class SpineFilmMesh : public SingleLayerSpineMesh<ELEMENT> {
+class SpineFilmMesh : public SingleLayerCubicSpineMesh<ELEMENT> {
 public:
   /**
    * Constructor for the spine inclined plane mesh
    *
    * @param nx Number of elements in the x direction
    * @param ny Number of elements in the y direction
+   * @param nz Number of elements in the z direction
    * @param lx Length of the domain in the x direction
    * @param ly Length of the domain in the y direction
+   * @param lz Length of the domain in the z direction
    * @param time_stepper_pt Pointer to the time stepper
    */
   SpineFilmMesh(
-    const unsigned &nx, const unsigned &ny, const double &lx, const double &ly, TimeStepper *time_stepper_pt
-  ) : SingleLayerSpineMesh<ELEMENT>(nx, ny, lx, ly, true, time_stepper_pt) {
+    const unsigned &nx, const unsigned &ny, const unsigned &nz,
+    const double &lx, const double &ly, const double &lz,
+    TimeStepper *time_stepper_pt
+  ) : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, true, true, time_stepper_pt) {
   } //end of constructor
 };
 
@@ -38,27 +42,30 @@ public:
 // ============================================================================
 template<class ELEMENT, class TIMESTEPPER>
 class SpineControlledFilmProblem :
-    public ControlledFilmProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> > {
+    public ControlledFilmProblem<ELEMENT, SpineSurfaceFluidInterfaceElement<ELEMENT> > {
 public:
   /**
    * Constructor for the spine controlled film problem
    *
    * @param nx Number of elements in the x direction
    * @param ny Number of elements in the y direction
-   * @param n_control the dimension of the control system
+   * @param nz Number of elements in the z direction
+   * @param nx_control Number of elements in the x direction of the control system
+   * @param ny_control Number of elements in the y direction of the control system
    * @param m_control the number of actuators
    * @param p_control the number of observers
    */
   SpineControlledFilmProblem(
-    const unsigned &nx, const unsigned &ny, const int &n_control, const int &m_control, const int &p_control
-  ): ControlledFilmProblem<ELEMENT, SpineLineFluidInterfaceElement<ELEMENT> >(n_control, m_control, p_control) {
+    const unsigned &nx, const unsigned &ny, const unsigned &nz,
+    const int &nx_control, const int &ny_control, const int &m_control, const int &p_control
+  ): ControlledFilmProblem<ELEMENT, SpineSurfaceFluidInterfaceElement<ELEMENT> >(nx_control, ny_control, m_control, p_control) {
     using namespace Global_Physical_Variables; // to access the length
 
     // create our one and only timestepper, with adaptive timestepping
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    this->Bulk_mesh_pt = new SpineFilmMesh<ELEMENT>(nx, ny, Lx, 1.0, this->time_stepper_pt());
+    this->Bulk_mesh_pt = new SpineFilmMesh<ELEMENT>(nx, ny, nz, Lx, Ly, 1.0, this->time_stepper_pt());
 
     // create the free surface elements
     this->make_free_surface_elements();
