@@ -184,39 +184,39 @@ public:
       }
     }
 
-    {
-      // Loop over the front of the mesh (the side wall of the channel)
-      unsigned b = 1;
-      unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
-      for (unsigned j = 0; j < n_node; j++) {
-        // No slip no penetration
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
-
-        // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
-      }
-    }
-
-    {
-      // Loop over the rear of the mesh (the side wall of the channel)
-      unsigned b = 3;
-      unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
-      for (unsigned j = 0; j < n_node; j++) {
-        // No slip no penetration
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
-        Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
-
-        // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
-        // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
-      }
-    }
+    // {
+    //   // Loop over the front of the mesh (the side wall of the channel)
+    //   unsigned b = 1;
+    //   unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
+    //   for (unsigned j = 0; j < n_node; j++) {
+    //     // No slip no penetration
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
+    //
+    //     // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+    //   }
+    // }
+    //
+    // {
+    //   // Loop over the rear of the mesh (the side wall of the channel)
+    //   unsigned b = 3;
+    //   unsigned n_node = Bulk_mesh_pt->nboundary_node(b);
+    //   for (unsigned j = 0; j < n_node; j++) {
+    //     // No slip no penetration
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(0);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(1);
+    //     Bulk_mesh_pt->boundary_node_pt(b, j)->pin(2);
+    //
+    //     // fprintf(stderr, "%d: (%lf, %lf, %lf)\n", j,
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(0),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(1),
+    //     // Bulk_mesh_pt->boundary_node_pt(0, j)->x(2));
+    //   }
+    // }
 
     // // THIS IS FOR NON-PERIODIC BOUNDARIES (no slip/penetration on all walls)
     // for (unsigned b = 0; b < 5; b++) {

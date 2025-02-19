@@ -128,6 +128,23 @@ void SingleLayerCubicSpineMesh<ELEMENT>::build_spine(const unsigned e,
   // Read out number of linear points in the element
   unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
+  // Check if this spine is actually on a periodic boundary
+  if (this->Xperiodic && this->Yperiodic && (e == (n_x * n_y - 1)) &&
+      (n == (n_p * n_p - 1))) {
+    match_spine_periodic(e, n, 'c');
+    return;
+  }
+
+  if (this->Xperiodic && ((e % n_x) == (n_x - 1)) && ((n % n_p) == (n_p - 1))) {
+    match_spine_periodic(e, n, 'x');
+    return;
+  }
+
+  if (this->Yperiodic && (e >= ((n_y - 1) * n_x)) && (n >= ((n_p - 1) * n_p))) {
+    match_spine_periodic(e, n, 'y');
+    return;
+  }
+
   // Assign the new spine with length h
   Spine *new_spine_pt = new Spine(1.0);
   Spine_pt.push_back(new_spine_pt);
@@ -301,50 +318,48 @@ void SingleLayerCubicSpineMesh<ELEMENT>::build_single_layer_mesh(
     }
   }
 
-  // TODO: the problem is in 'match_spine_periodic'
-
-  // CORRECT FOR PERIODICITY
-  if (this->Xperiodic) {
-    // iterate over the nodes on the right boundary and attach the spines from
-    // the left boundary
-
-    // we need to do all the nodes in the last column for the first element
-    for (unsigned ly = 0; ly < n_p; ly++) {
-      this->match_spine_periodic(n_x - 1, n_p - 1 + ly * n_p, 'x');
-    }
-
-    // for the rest of the elements we can start from node 1, since node 0
-    // was node n_p of the previous element
-    for (unsigned long row = 1; row < n_y; row++) {
-      for (unsigned ly = 1; ly < n_p; ly++) {
-        this->match_spine_periodic(n_x - 1 + row * n_x, n_p - 1 + ly * n_p,
-                                   'x');
-      }
-    }
-  }
-
-  if (this->Yperiodic) {
-    // iterate over the nodes on the rear boundary and attach the spines from
-    // the front boundary
-
-    // we need to do all the nodes in the last row for the first element
-    for (unsigned lx = 0; lx < n_p; lx++) {
-      this->match_spine_periodic((n_y - 1) * n_x, lx + (n_p - 1) * n_p, 'y');
-    }
-
-    // for the rest of the elements we can start from node 1, since node 0
-    // was node n_p of the previous element
-    for (unsigned long col = 1; col < n_x; col++) {
-      for (unsigned lx = 1; lx < n_p; lx++) {
-        this->match_spine_periodic(col + (n_y - 1) * n_x, lx + (n_p - 1) * n_p,
-                                   'y');
-      }
-    }
-  }
-
-  if (this->Xperiodic && this->Yperiodic) {
-    this->match_spine_periodic(n_x * n_y - 1, n_p * n_p - 1, 'c');
-  }
+  // // CORRECT FOR PERIODICITY
+  // if (this->Xperiodic) {
+  //   // iterate over the nodes on the right boundary and attach the spines from
+  //   // the left boundary
+  //
+  //   // we need to do all the nodes in the last column for the first element
+  //   for (unsigned ly = 0; ly < n_p; ly++) {
+  //     this->match_spine_periodic(n_x - 1, n_p - 1 + ly * n_p, 'x');
+  //   }
+  //
+  //   // for the rest of the elements we can start from node 1, since node 0
+  //   // was node n_p of the previous element
+  //   for (unsigned long row = 1; row < n_y; row++) {
+  //     for (unsigned ly = 1; ly < n_p; ly++) {
+  //       this->match_spine_periodic(n_x - 1 + row * n_x, n_p - 1 + ly * n_p,
+  //                                  'x');
+  //     }
+  //   }
+  // }
+  //
+  // if (this->Yperiodic) {
+  //   // iterate over the nodes on the rear boundary and attach the spines from
+  //   // the front boundary
+  //
+  //   // we need to do all the nodes in the last row for the first element
+  //   for (unsigned lx = 0; lx < n_p; lx++) {
+  //     this->match_spine_periodic((n_y - 1) * n_x, lx + (n_p - 1) * n_p, 'y');
+  //   }
+  //
+  //   // for the rest of the elements we can start from node 1, since node 0
+  //   // was node n_p of the previous element
+  //   for (unsigned long col = 1; col < n_x; col++) {
+  //     for (unsigned lx = 1; lx < n_p; lx++) {
+  //       this->match_spine_periodic(col + (n_y - 1) * n_x, lx + (n_p - 1) * n_p,
+  //                                  'y');
+  //     }
+  //   }
+  // }
+  //
+  // if (this->Xperiodic && this->Yperiodic) {
+  //   this->match_spine_periodic(n_x * n_y - 1, n_p * n_p - 1, 'c');
+  // }
 }
 
 } // namespace oomph

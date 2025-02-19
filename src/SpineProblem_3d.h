@@ -56,7 +56,7 @@ public:
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const double &lx, const double &ly, const double &lz,
     TimeStepper *time_stepper_pt
-  ) : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, true, false, time_stepper_pt) {
+  ) : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, true, true, time_stepper_pt) {
   } //end of constructor
 };
 

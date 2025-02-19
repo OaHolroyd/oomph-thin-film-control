@@ -63,7 +63,26 @@ int main(int argc, char **argv) {
     SpineControlledFilmProblem3D<SpineElement<QTaylorHoodElement<NDIM>>, BDF<2>>
         problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
-    // problem.describe_dofs();
+    DenseDoubleMatrix jacobian = DenseDoubleMatrix(1620);
+    DoubleVector residuals = DoubleVector();
+    problem.get_jacobian(residuals, jacobian);
+    problem.describe_dofs();
+
+    fprintf(stderr, "Jacobian has size (%lu, %lu)\n", jacobian.nrow(),
+            jacobian.ncol());
+    FILE *fp = fopen("jacobian.txt", "w");
+    for (unsigned i = 0; i < jacobian.nrow(); i++) {
+      double abs_row_sum = 0.0;
+      for (unsigned j = 0; j < jacobian.ncol(); j++) {
+        fprintf(fp, "%lf ", jacobian.get_entry(i, j));
+        abs_row_sum += fabs(jacobian.get_entry(i, j));
+      }
+      fprintf(fp, "\n");
+
+      if (abs_row_sum < 1e-10) {
+        fprintf(stderr, "Row %d has sum %lf\n", i, abs_row_sum);
+      }
+    }
 
     // Step up to the start of the controls
     problem.initial_condition(1, 1, 0.01);
