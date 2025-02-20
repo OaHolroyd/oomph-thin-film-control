@@ -15,10 +15,6 @@ namespace oomph {
 /// The mesh contains a layer of spinified fluid elements (of type ELEMENT;
 /// e.g  SpineElement<QCrouzeixRaviartElement<3>)
 /// for 3D problems, in which the interface's vertical position can vary
-///
-/// This mesh has been carefully designed so that the
-/// numeration of the nodes on the boundaries 0 and 5 (bottom and top)
-/// coincides with the numeration of the spines
 //======================================================================
 template <class ELEMENT>
 class SingleLayerCubicSpineMesh : public CubicBrickMesh<ELEMENT>,
@@ -60,7 +56,7 @@ protected:
   /// Helper function to build a single spine for the nth node of element e
   virtual void build_spine(unsigned e, unsigned n);
 
-  /// Helper function to match a spine on a periodic bounday with it's matching
+  /// Helper function to match a spine on a periodic boundary with it's matching
   /// counterpart. The mode is a character that can be 'x', 'y', or 'c' to
   /// denote x-periodicity, y-periodicity, or both (corner), respectively.
   virtual void match_spine_periodic(unsigned e, unsigned n, char mode);
@@ -95,8 +91,9 @@ SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(
 //===========================================================================
 /// Constructor for spine 3D mesh: Pass number of elements in x-direction,
 /// number of elements in y-direction, number elements in z-direction,
-/// length, width and height of layer,
-/// and pointer to timestepper (defaults to Static timestepper).
+/// length, width and height of layer, whether the mesh is periodic in x,
+/// whether the mesh is periodic in y,  and pointer to timestepper (defaults
+/// to Static timestepper).
 //===========================================================================
 template <class ELEMENT>
 SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(

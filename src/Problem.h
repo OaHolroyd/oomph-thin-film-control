@@ -42,7 +42,11 @@ protected:
   std::string Output_prefix;
 
   /// fill the h, q, f arrays with the current values
-  void set_hqf(int use_control = 0);
+  virtual void set_hqf(int use_control = 0) {
+    fprintf(stderr, "MUST BE DEFINED BY SUBCLASS\n");
+    throw std::runtime_error("set_hqf not implemented in parent class");
+    fprintf(stderr, "after\n");
+  }
 
   /// output surface information
   void output_surface();
@@ -52,7 +56,8 @@ protected:
 
 public:
   /// Storage of the interface/flux/forcing at regular intervals
-  double *h, *q, *f;
+  /// indexed into using row-major ordering, ie h[xj + yi * nx_control]
+  double *h, *qx, *qy, *f;
 
   /// Information for the control system
   int nx_control; // number of points in the x-direction of the control system
@@ -74,7 +79,7 @@ public:
    * @param p_control the number of observers
    */
   ControlledFilmProblem(const int &nx_control, const int &ny_control,
-                          const int &m_control, const int &p_control = 0) {
+                        const int &m_control, const int &p_control = 0) {
     // Set up the output directory (always delete the old one)
     std::filesystem::path out_dir = std::filesystem::path("output");
     if (std::filesystem::exists(out_dir)) {
@@ -97,7 +102,8 @@ public:
     this->p_control = p_control;
 
     this->h = new double[nx_control * ny_control];
-    this->q = new double[nx_control * ny_control];
+    this->qx = new double[nx_control * ny_control];
+    this->qy = new double[nx_control * ny_control];
     this->f = new double[nx_control * ny_control];
 
     // mesh details
@@ -194,7 +200,8 @@ public:
     delete this->time_stepper_pt();
 
     delete[] this->h;
-    delete[] this->q;
+    delete[] this->qx;
+    delete[] this->qy;
     delete[] this->f;
   }
 };
@@ -232,86 +239,33 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
 } // end of initial_condition
 
 template <class ELEMENT, class INTERFACE_ELEMENT>
-void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
-    int use_control) {
-  using namespace Global_Physical_Variables;
-  // TODO: implement this
-  // unsigned int j = 0; // keep track of where we are along the surface mesh
-  // for (int i = 0; i < n_control; i++) {
-  //   // find the coordinate of the ith measurement point
-  //   double DX = Lx / n_control;
-  //   double xi = (DX * (static_cast<double>(i) + 0.5));
-  //
-  //   // loop over the free surface elements to find the one containing the
-  //   point
-  //   //   assuming the surface elements are ordered in the x direction, we can
-  //   start the search from the same place as
-  //   //   we found the last point
-  //   FaceElement *element;
-  //   Node *n0 = nullptr, *n1 = nullptr;
-  //   for (; j < Surface_mesh_pt->nelement(); j++) {
-  //     element = dynamic_cast<FaceElement *>(Surface_mesh_pt->element_pt(j));
-  //
-  //     // assert that the element has 3 nodes TODO: why?
-  //     assert(element->nnode() == 3);
-  //
-  //     // get the x coordinates of the nodes
-  //     double x0 = element->node_pt(0)->x(0);
-  //     double x1 = element->node_pt(1)->x(0);
-  //     double x2 = element->node_pt(2)->x(0);
-  //
-  //     // find the enclosing nodes
-  //     if (xi >= x0 && xi <= x2) {
-  //       if (xi < x1) {
-  //         n0 = element->node_pt(0);
-  //         n1 = element->node_pt(1);
-  //       } else {
-  //         n0 = element->node_pt(1);
-  //         n1 = element->node_pt(2);
-  //       }
-  //       break;
-  //     }
-  //   }
-  //
-  //   // ensure that we found a pair of nodes
-  //   assert(n0 != nullptr && n1 != nullptr);
-  //
-  //   // linearly interpolate to find h(xi)
-  //   double h0 = n0->x(1);
-  //   double h1 = n1->x(1);
-  //   h[i] = h0 + (h1 - h0) * (xi - n0->x(0)) / (n1->x(0) - n0->x(0));
-  //
-  //   // use the leading order approximation to get q(xi)
-  //   q[i] = 2.0 / 3.0 * h[i]; // TODO: do the integration properly
-  //
-  //   // use control to set f
-  //   f[i] = (use_control > 0) ? control(xi) : 0.0;
-  // }
-}
-
-template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   using namespace Global_Physical_Variables;
 
   // open the file
   std::ofstream file;
   std::ostringstream filename;
-  filename << Output_prefix << "1d_" << out_step << ".dat";
-  file.open(filename.str().c_str());
+  filename << Output_prefix << "surface_" << out_step << ".dat";
+  FILE *fp = fopen(filename.str().c_str(), "w");
 
   // write the time
-  file << "# " << step << " " << time << std::endl;
+  fprintf(fp, "# %d %lf\n", step, time);
 
   // write the data
-  // TODO: implement this
-  // for (unsigned i = 0; i < n_control; i++) {
-  //   double DX = Lx / n_control;
-  //   double xi = (DX * (static_cast<double>(i) + 0.5));
-  //   file << xi << " " << h[i] << " " << q[i] << " " << f[i] << std::endl;
-  // }
+  double dx = Lx / this->nx_control;
+  double dy = Ly / this->ny_control;
+  for (int i = 0; i < this->ny_control; i++) {
+    double yi = (dy * (static_cast<double>(i) + 0.5)); // y coordinate
+    for (int j = 0; j < this->nx_control; j++) {
+      double xj = (dx * (static_cast<double>(j) + 0.5)); // x coordinate
+      int k = j + i * this->nx_control; // linear index into the arrays
+      fprintf(fp, "%lf %lf %lf %lf %lf\n", yi, xj, h[k], qx[k], qy[k]);
+    }
+    fprintf(fp, "\n");
+  }
 
   // close the file
-  file.close();
+  fclose(fp);
 }
 
 template <class ELEMENT, class INTERFACE_ELEMENT>

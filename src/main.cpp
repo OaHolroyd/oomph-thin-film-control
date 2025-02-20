@@ -18,14 +18,13 @@ using namespace oomph;
 int main(int argc, char **argv) {
   CommandLineArgs::setup(argc, argv);
 
-
   using namespace Global_Physical_Variables;
   // Create the control problem
-  unsigned nx = 5;
-  unsigned ny = 4;
-  unsigned nz = 3;
-  int nx_control = 90;
-  int ny_control = 30;
+  unsigned nx = 16;
+  unsigned ny = 16;
+  unsigned nz = 4;
+  int nx_control = nx;
+  int ny_control = ny;
   int m_control = 7;
   int p_control = 1;
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
@@ -33,10 +32,11 @@ int main(int argc, char **argv) {
 
   // Step up to the start of the controls
   problem.initial_condition(1, 1, 0.01);
-  double tburn = 1.0;
+  double tburn = 2.0;
   double dtburn = 0.1;
-  problem.assign_initial_values_impulsive(dtburn);
-  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 10, 0);
+  problem.assign_initial_values_impulsive(
+      dtburn); // TODO: this might be mucking up the initial condition
+  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, 0);
 
   // // Step with controls turned on
   // double tcontrol = 100.0;
