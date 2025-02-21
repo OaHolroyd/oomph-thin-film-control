@@ -115,8 +115,11 @@ public:
    * @param Kx the streamwise wavenumber of the initial condition
    * @param Ky the spanwise wavenumber of the initial condition
    * @param delta the amplitude of the initial condition
+   * @param p a power that control the evenness of the initial condition (1.0
+   *          is symmetric)
    */
-  void initial_condition(int Kx = 1, int Ky = 1, double delta = 0.01);
+  void initial_condition(int Kx = 1, int Ky = 1, double delta = 0.01,
+                         double p = 0.0);
 
   /**
    * Take a timestep of size dt for n_tsteps
@@ -208,7 +211,7 @@ public:
 
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
-    int Kx, int Ky, double delta) {
+    int Kx, int Ky, double delta, double p) {
   // Load the namespace
   using namespace Global_Physical_Variables;
 
@@ -227,12 +230,14 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
 
       // perturb the z values using the wavenumber and amplitude specified
       Bulk_mesh_pt->node_pt(n)->x(2) *=
-          1.0 + delta * sin(Kx * 2.0 * M_PI * (x + 10.0) / Lx) *
-                    sin(Ky * 2.0 * M_PI * y / Lx);
+          1.0 + delta * sin(Kx * 2.0 * M_PI * pow(x / Lx, p)) *
+                    sin(Ky * 2.0 * M_PI * pow(y / Ly, p));
 
-      // set the velocity to the Nusselt flat-film solution
-      Bulk_mesh_pt->node_pt(n)->set_value(0, z * (2.0 - z));
-      Bulk_mesh_pt->node_pt(n)->set_value(1, 0.0);
+      // set the velocity to the Nusselt flat-film solution (taking care to
+      // match the direction of gravity).
+      double v = z * (2.0 - z); // velocity magnitude
+      Bulk_mesh_pt->node_pt(n)->set_value(0, G[0] * v * 0.5);
+      Bulk_mesh_pt->node_pt(n)->set_value(1, G[1] * v * 0.5);
       Bulk_mesh_pt->node_pt(n)->set_value(2, 0.0);
     }
   }
