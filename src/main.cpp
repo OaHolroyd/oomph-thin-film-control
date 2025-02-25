@@ -1,10 +1,10 @@
 // A driver that solves the control problem of stabilising the flat
 // interface of a thin film falling down an inclined plane.
 
-//Standard C++ library includes
+// Standard C++ library includes
 #include <iostream>
 
-//Finite-Element library routines
+// Finite-Element library routines
 #include "generic.h"
 
 // Project-specific includes
@@ -14,8 +14,7 @@ using namespace std;
 
 using namespace oomph;
 
-
-//start of main
+// start of main
 int main(int argc, char **argv) {
   using namespace Global_Physical_Variables;
 
@@ -31,7 +30,8 @@ int main(int argc, char **argv) {
   int n_control = 100;
   int m_control = 7;
   int p_control = 1;
-  SpineControlledFilmProblem<SpineElement<FLUID_ELEMENT >, BDF<2> > problem(nx, ny, n_control, m_control, p_control);
+  SpineControlledFilmProblem<SpineElement<FLUID_ELEMENT>, BDF<2>> problem(
+      nx, ny, n_control, m_control, p_control);
 
   // Step up to the start of the controls
   problem.initial_condition(1, 0.01);
