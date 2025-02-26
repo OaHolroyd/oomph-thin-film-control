@@ -16,6 +16,12 @@ using namespace oomph;
 
 // start of main
 int main(int argc, char **argv) {
+
+#ifdef OOMPH_HAS_MPI
+  // Initialise MPI
+  MPI_Helpers::init(argc, argv);
+#endif
+
   CommandLineArgs::setup(argc, argv);
 
   using namespace Global_Physical_Variables;
@@ -35,11 +41,17 @@ int main(int argc, char **argv) {
   problem.initial_condition(1, 1, 0.01, 0.8);
   double tburn = 200.0;
   double dtburn = 0.5;
-  problem.assign_initial_values_impulsive(dtburn); // TODO: this might be mucking up the initial condition
+  problem.assign_initial_values_impulsive(
+      dtburn); // TODO: this might be mucking up the initial condition
   problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, 0);
 
   // // Step with controls turned on
   // double tcontrol = 100.0;
   // double dt = 0.1;
   // problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
+
+  // Finalise MPI
+#ifdef OOMPH_HAS_MPI
+  MPI_Helpers::finalize();
+#endif
 }

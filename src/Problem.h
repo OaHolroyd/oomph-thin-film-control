@@ -247,6 +247,13 @@ template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   using namespace Global_Physical_Variables;
 
+#ifdef OOMPH_HAS_MPI
+  // only output if this is rank 0
+  if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
+    return;
+  }
+#endif
+
   // open the file
   std::ofstream file;
   std::ostringstream filename;
