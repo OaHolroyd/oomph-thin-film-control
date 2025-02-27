@@ -2,8 +2,8 @@
 #   VARIABLE DEFINITIONS                                                       #
 # ============================================================================ #
 # compiler/linker
-CC=gcc
-CXX=g++
+CC=mpicc
+CXX=mpic++
 LD=$(CXX)
 
 # if the environment variable OOMPHLIB is not set, uncomment this and set it

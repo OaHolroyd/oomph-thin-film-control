@@ -6,7 +6,7 @@
 #define PROGRESS_BAR_H
 
 #include <string>
-
+#include <ctime>
 
 enum TimeUnit {
   SEC,
