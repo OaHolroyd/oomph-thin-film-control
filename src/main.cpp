@@ -22,16 +22,35 @@ int main(int argc, char **argv) {
   MPI_Helpers::init(argc, argv);
 #endif
 
-  CommandLineArgs::setup(argc, argv);
-
   using namespace Global_Physical_Variables;
 
+  // allow overwriting of the default values from the command line
+  CommandLineArgs::setup(argc, argv);
+  CommandLineArgs::specify_command_line_flag("--lx", &Lx, "streamwise length");
+  CommandLineArgs::specify_command_line_flag("--ly", &Ly, "spanwise length");
+
+  CommandLineArgs::specify_command_line_flag("--re", &Re, "Reynolds number");
+  CommandLineArgs::specify_command_line_flag("--ca", &Ca, "capillary number");
+  CommandLineArgs::specify_command_line_flag("--theta", &Theta, "incline angle");
+
+  CommandLineArgs::specify_command_line_flag("--tburn", &tburn, "burn in time");
+  CommandLineArgs::specify_command_line_flag("--dtburn", &dtburn, "time step during burn");
+  CommandLineArgs::specify_command_line_flag("--tcontrol", &tcontrol, "control time");
+  CommandLineArgs::specify_command_line_flag("--dtcontrol", &dtcontrol, "time step during control");
+
+  CommandLineArgs::specify_command_line_flag("--nx", &nx, "streamwise discretisation");
+  CommandLineArgs::specify_command_line_flag("--ny", &ny, "spanwise discretisation");
+  CommandLineArgs::specify_command_line_flag("--nz", &nz, "vertical discretisation");
+  CommandLineArgs::specify_command_line_flag("--nx_control", &nx_control, "streamwise control discretisation");
+  CommandLineArgs::specify_command_line_flag("--ny_control", &ny_control, "spanwise control discretisation");
+
+  CommandLineArgs::parse_and_assign();
+  CommandLineArgs::doc_specified_flags();
+
+  fprintf(stderr, "lx: %lf\n", Lx);
+  return 0;
+
   // Create the control problem
-  unsigned nx = 100;
-  unsigned ny = 100;
-  unsigned nz = 6;
-  int nx_control = 50;
-  int ny_control = 50;
   int m_control = 7;
   int p_control = 1;
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
@@ -39,16 +58,13 @@ int main(int argc, char **argv) {
 
   // Step up to the start of the controls
   problem.initial_condition(1, 1, 0.01, 0.8);
-  double tburn = 200.0;
-  double dtburn = 0.5;
-  problem.assign_initial_values_impulsive(
-      dtburn); // TODO: this might be mucking up the initial condition
+  problem.assign_initial_values_impulsive(dtburn); // TODO: mucks up the initial condition
   problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, 0);
 
-  // // Step with controls turned on
-  // double tcontrol = 100.0;
-  // double dt = 0.1;
-  // problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
+  // Step with controls turned on
+  // if (tcontrol > 0.0) {
+  //   problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1, 1);
+  // }
 
   // Finalise MPI
 #ifdef OOMPH_HAS_MPI
