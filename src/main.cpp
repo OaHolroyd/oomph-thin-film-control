@@ -27,11 +27,11 @@ int main(int argc, char **argv) {
   using namespace Global_Physical_Variables;
 
   // Create the control problem
-  unsigned nx = 32;
-  unsigned ny = 32;
-  unsigned nz = 4;
-  int nx_control = 32;
-  int ny_control = 32;
+  unsigned nx = 100;
+  unsigned ny = 100;
+  unsigned nz = 6;
+  int nx_control = 50;
+  int ny_control = 50;
   int m_control = 7;
   int p_control = 1;
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
