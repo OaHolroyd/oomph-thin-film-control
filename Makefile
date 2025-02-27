@@ -7,7 +7,7 @@ CXX=g++
 LD=$(CXX)
 
 # if the environment variable OOMPHLIB is not set, uncomment this and set it
-#OOMPHLIB=/path/to/oomph-lib/directory
+OOMPHLIB=/storage/maths/mauvvq/oomph-lib
 
 # flags (for MacOS)
 #WARNINGS=-Wall -Wextra -pedantic -Wno-implicit-function-declaration -Wno-unused-parameter
@@ -36,7 +36,7 @@ LDLIBS=-L$(OOMPHLIB)/external_distributions/mumps_and_scalapack/mumps_and_scalap
        -L$(OOMPHLIB)/external_distributions/gmp/gmp_default_installation/lib \
        -L$(OOMPHLIB)/external_distributions/mpfr/mpfr_default_installation/lib \
        -L$(OOMPHLIB)/external_distributions/cgal/cgal_default_installation/lib \
-       -L$(OOMPHLIB)/build/lib $(OOMPHLIB)/build/lib/libjack_cool.so \
+       -L$(OOMPHLIB)/build/lib $(OOMPHLIB)/build/lib/*.so \
        -L/software/easybuild/software/UCC/1.0.0-GCCcore-11.3.0/lib64 \
        -L/software/easybuild/software/PMIx/4.1.2-GCCcore-11.3.0/lib64 \
        -L/software/easybuild/software/libfabric/1.15.1-GCCcore-11.3.0/lib64 \
@@ -154,7 +154,7 @@ INCLUDES=-isystem $(OOMPHLIB)/build/include \
          -isystem $(OOMPHLIB)/external_distributions/mpfr/mpfr_default_installation/include \
          -DOOMPH_HAS_MPFR \
          -isystem $(OOMPHLIB)/external_distributions/cgal/cgal_default_installation/include \
-         -DOOMPH_HAS_CGAL \
+         -DOOMPH_HAS_CGAL
 OLFLAGS=-DHAVE_CONFIG_H -DOOMPH_HAS_STACKTRACE -DOOMPH_HAS_UNISTDH -DOOMPH_HAS_MPI \
         -DOOMPH_HAS_TRIANGLE_LIB -DOOMPH_HAS_TETGEN_LIB -DUSING_OOMPH_SUPERLU \
         -DUSING_OOMPH_SUPERLU_DIST -DOOMPH_HAS_FPUCONTROLH -DOOMPH_HAS_MALLOCH
