@@ -37,11 +37,6 @@ int main(int argc, char **argv) {
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
-#ifdef OOMPH_HAS_MUMPS
-  // Use mumps if available
-  problem.linear_solver_pt() = new MumpsSolver;
-#endif
-
   // Step up to the start of the controls
   problem.initial_condition(1, 1, 0.01, 0.8);
   double tburn = 200.0;

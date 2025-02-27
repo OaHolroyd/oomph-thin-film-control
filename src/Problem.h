@@ -91,6 +91,11 @@ public:
     // Ensure we use the directory as a prefix
     this->Output_prefix = out_dir.c_str() + std::string("/");
 
+#ifdef OOMPH_HAS_MUMPS
+    // Use mumps if available
+    problem.linear_solver_pt() = new MumpsSolver;
+#endif
+
     // don't print loads of internal solver details
     this->Shut_up_in_newton_solve = true;
     this->linear_solver_pt()->disable_doc_time();
