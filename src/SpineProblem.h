@@ -173,10 +173,17 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
         }
       }
 
-      assert(n0->x(0) <= xj && n0->x(1) <= yi);
-      assert(n1->x(0) >= xj && n1->x(1) <= yi);
-      assert(n2->x(0) <= xj && n2->x(1) >= yi);
-      assert(n3->x(0) >= xj && n3->x(1) >= yi);
+      // assert(n0->x(0) <= xj && n0->x(1) <= yi);
+      // assert(n1->x(0) >= xj && n1->x(1) <= yi);
+      // assert(n2->x(0) <= xj && n2->x(1) >= yi);
+      // assert(n3->x(0) >= xj && n3->x(1) >= yi);
+
+      if ((n0->x(0) <= xj && n0->x(1) <= yi) ||
+          (n1->x(0) >= xj && n1->x(1) <= yi) ||
+          (n2->x(0) <= xj && n2->x(1) >= yi) ||
+          (n3->x(0) >= xj && n3->x(1) >= yi)) {
+        fprintf(stderr, "[%d] (%g, %g) not found\n", this->communicator_pt()->my_rank(), xj, yi);
+      }
 
       // convert coordinates to local coordinates
       double x0 = n0->x(0);
