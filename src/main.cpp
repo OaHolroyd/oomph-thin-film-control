@@ -57,9 +57,6 @@ int main(int argc, char **argv) {
   // only output if this is rank 0
   if (MPI_Helpers::communicator_pt()->my_rank() == 0) {
     CommandLineArgs::doc_specified_flags();
-  } else {
-    fprintf(stderr, "Rank %d: not outputting command line arguments\n",
-            MPI_Helpers::communicator_pt()->my_rank());
   }
 #else
   CommandLineArgs::doc_specified_flags();
@@ -91,12 +88,6 @@ int main(int argc, char **argv) {
 #ifdef OOMPH_HAS_MPI
   }
 #endif
-
-#ifdef OOMPH_HAS_MPI
-  MPI_Helpers::finalize();
-#endif
-
-  return 0;
 
   // Create the control problem
   int m_control = 7;
