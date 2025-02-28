@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
   CommandLineArgs::specify_command_line_flag("--ny_control", &ny_control, "spanwise control discretisation");
 
   CommandLineArgs::parse_and_assign();
-  CommandLineArgs::doc_specified_flags();
 
   // Create the control problem
   int m_control = 7;

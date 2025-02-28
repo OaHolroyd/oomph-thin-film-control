@@ -18,7 +18,7 @@ namespace Global_Physical_Variables {
 double Lx = 32.0;
 
 /// The length of the domain in the y direction (spanwise)
-double Ly = 32.0;
+double Ly = 16.0;
 
 /// Reynolds number, based on the surface velocity of a flat film (Nusselt velocity)
 double Re = 15.0;
@@ -45,16 +45,16 @@ double dtcontrol = 0.1;
 unsigned nx = 100;
 
 /// The number of elements in the y direction
-unsigned ny = 100;
+unsigned ny = 40;
 
 /// The number of elements in the z direction
 unsigned nz = 6;
 
 /// The number of points in th control system in the x direction
-unsigned nx_control = 50;
+unsigned nx_control = 75;
 
 /// The number of points in th control system in the y direction
-unsigned ny_control = 50;
+unsigned ny_control = 30;
 
 /// The Vector direction of gravity (x/y/z, ie streamwise, spanwise, normal)
 Vector<double> G = {2.0, 0.0, -2.0 / tan(Theta)}; // x is streamwise, y is spanwise, z is normal
