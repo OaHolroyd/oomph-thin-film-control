@@ -139,6 +139,7 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
 
       // find enclosing nodes
       int nnodes = el->nnode();
+      fprintf(stderr, "[%d] nnodes: %d\n", this->communicator_pt()->my_rank(), nnodes);
       for (int n = 0; n < nnodes; n++) {
         SpineNode *nn = dynamic_cast<SpineNode *>(el->node_pt(n));
         double x = nn->x(0);
