@@ -5,11 +5,18 @@
 #ifndef SPINEINCLINEDPLANEPROBLEM_H
 #define SPINEINCLINEDPLANEPROBLEM_H
 
+#ifdef OOMPH_HAS_MPI
+// mpi headers
+#include "mpi.h"
+#endif
+
 #include "fluid_interface.h"
 #include "navier_stokes.h"
 
 #include "Problem.h"
 #include "single_layer_cubic_spine_mesh.h"
+
+#define BAD_VAL (-2.0)
 
 // ======================================================================
 //   Create a spine mesh for the problem
@@ -127,7 +134,7 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
       int ej = pj * nx;
       int k = j + i * this->nx_control; // linear index into the arrays
 
-      this->h[k] = -2.0; // default (impossible) value
+      this->h[k] = BAD_VAL; // default (impossible) value
 
       // find the surface element containing (xj, yi)
       int e;
@@ -149,13 +156,15 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
             (n1->x(1) <= yi) && (n2->x(0) <= xj) && (n2->x(1) >= yi) &&
             (n3->x(0) >= xj) && (n3->x(1) >= yi)) {
           has_found = 1;
-          fprintf(stderr, "[%d] (%g, %g) FOUND\n", this->communicator_pt()->my_rank(), xj, yi);
+          fprintf(stderr, "[%d] (%g, %g) FOUND\n",
+                  this->communicator_pt()->my_rank(), xj, yi);
           break;
         }
       }
 
       if (!has_found) {
-        fprintf(stderr, "[%d] (%g, %g) NOT FOUND\n", this->communicator_pt()->my_rank(), xj, yi);
+        fprintf(stderr, "[%d] (%g, %g) NOT FOUND\n",
+                this->communicator_pt()->my_rank(), xj, yi);
         continue;
       }
 #else
@@ -244,6 +253,30 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
       this->f[k] = 0.0;
     }
   }
+
+  // if using multiple processors, we need to gather the data onto rank 0
+#ifdef OOMPH_HAS_MPI
+  // no need to gather if there is only one processor
+  int nproc = this->communicator_pt()->nproc();
+  if (nproc == 1) {
+    return;
+  }
+
+  // gather the data onto rank 0
+  for (int i = 1; l < nproc; i++) {
+    // send from processor i to processor 0
+    MPI_Sendrecv(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0, 0,
+                 this->work, this->nx_control * this->ny_control, MPI_DOUBLE, 0,
+                 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    // copy over any data that isn't a bad value
+    for (int k = 0; k < this->nx_control * this->ny_control; k++) {
+      if (this->work[k] != BAD_VAL) {
+        this->h[k] = this->work[k];
+      }
+    }
+  }
+#endif
 }
 
 #endif // SPINEINCLINEDPLANEPROBLEM_H

@@ -57,7 +57,7 @@ protected:
 public:
   /// Storage of the interface/flux/forcing at regular intervals
   /// indexed into using row-major ordering, ie h[xj + yi * nx_control]
-  double *h, *qx, *qy, *f;
+  double *h, *qx, *qy, *f, *work;
 
   /// Information for the control system
   int nx_control; // number of points in the x-direction of the control system
@@ -110,6 +110,7 @@ public:
     this->qx = new double[nx_control * ny_control];
     this->qy = new double[nx_control * ny_control];
     this->f = new double[nx_control * ny_control];
+    this->work = new double[nx_control * ny_control];
 
     // mesh details
   }
@@ -243,6 +244,7 @@ public:
     delete[] this->qx;
     delete[] this->qy;
     delete[] this->f;
+    delete[] this->work;
   }
 };
 
