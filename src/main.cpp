@@ -67,8 +67,30 @@ int main(int argc, char **argv) {
 
   CommandLineArgs::parse_and_assign();
 
-  // output the values
-  fprintf(stderr, "Lx = %g\n", Lx);
+#ifdef OOMPH_HAS_MPI
+  // only output if this is rank 0
+  if (MPI_Helpers::communicator_pt()->my_rank() == 0) {
+#endif
+
+    // output the values
+    fprintf(stderr, "Lx = %g\n", Lx);
+    fprintf(stderr, "Ly = %g\n", Ly);
+    fprintf(stderr, "Re = %g\n", Re);
+    fprintf(stderr, "Ca = %g\n", Ca);
+    fprintf(stderr, "Theta = %g\n", Theta);
+    fprintf(stderr, "tburn = %g\n", tburn);
+    fprintf(stderr, "dtburn = %g\n", dtburn);
+    fprintf(stderr, "tcontrol = %g\n", tcontrol);
+    fprintf(stderr, "dtcontrol = %g\n", dtcontrol);
+    fprintf(stderr, "nx = %d\n", nx);
+    fprintf(stderr, "ny = %d\n", ny);
+    fprintf(stderr, "nz = %d\n", nz);
+    fprintf(stderr, "nx_control = %d\n", nx_control);
+    fprintf(stderr, "ny_control = %d\n", ny_control);
+
+#ifdef OOMPH_HAS_MPI
+  }
+#endif
 
 #ifdef OOMPH_HAS_MPI
   MPI_Helpers::finalize();
