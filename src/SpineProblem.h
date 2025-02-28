@@ -271,15 +271,19 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
   // gather the data onto rank 0
   for (int i = 1; i < nproc; i++) {
     // send from processor i to processor 0
-    if (my_rank == 0 || my_rank == i) {
-      fprintf(stderr, "[%d] START MPI_Sendrecv\n", my_rank);
-      MPI_Sendrecv(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0,
-                   0, this->work, this->nx_control * this->ny_control,
-                   MPI_DOUBLE, 0, 0, comm, MPI_STATUS_IGNORE);
-      fprintf(stderr, "[%d] END MPI_Sendrecv\n", my_rank);
+    if (my_rank == i) {
+      fprintf(stderr, "[%d] START MPI_Send\n", my_rank);
+      MPI_Send(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0, 0,
+               comm);
+      fprintf(stderr, "[%d] END MPI_Send\n", my_rank);
     }
 
     if (my_rank == 0) {
+      // receive on processor 0
+      fprintf(stderr, "[%d] START MPI_Recv\n", my_rank);
+      MPI_Recv(this->work, this->nx_control * this->ny_control, MPI_DOUBLE, i, 0, comm, MPI_STATUS_IGNORE);
+      fprintf(stderr, "[%d] END MPI_Recv\n", my_rank);
+
       // copy over any data that isn't a bad value
       fprintf(stderr, "[%d] START copy data\n", my_rank);
       for (int k = 0; k < this->nx_control * this->ny_control; k++) {
