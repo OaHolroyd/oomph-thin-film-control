@@ -42,7 +42,7 @@ double tcontrol = 100.0;
 double dtcontrol = 0.1;
 
 /// The number of elements in the x direction
-unsigned nx = 100;
+unsigned nx = 80;
 
 /// The number of elements in the y direction
 unsigned ny = 40;
@@ -51,10 +51,10 @@ unsigned ny = 40;
 unsigned nz = 6;
 
 /// The number of points in th control system in the x direction
-unsigned nx_control = 75;
+unsigned nx_control = 80;
 
 /// The number of points in th control system in the y direction
-unsigned ny_control = 30;
+unsigned ny_control = 40;
 
 /// The Vector direction of gravity (x/y/z, ie streamwise, spanwise, normal)
 Vector<double> G = {2.0, 0.0, -2.0 / tan(Theta)}; // x is streamwise, y is spanwise, z is normal
