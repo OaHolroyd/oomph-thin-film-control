@@ -197,6 +197,34 @@ public:
     std::cout << assign_eqn_numbers() << " in the main problem" << std::endl;
   } // end of complete_build
 
+  void delete_flux_elements(Mesh *const &surface_mesh_pt) {
+    // How many surface elements are in the surface mesh
+    unsigned n_element = surface_mesh_pt->nelement();
+
+    // Loop over the surface elements
+    for (unsigned e = 0; e < n_element; e++) {
+      // Kill surface element
+      delete surface_mesh_pt->element_pt(e);
+    }
+
+    // Wipe the mesh
+    surface_mesh_pt->flush_element_and_node_storage();
+  }
+
+  /// Actions before distribute: Wipe the mesh of prescribed flux elements
+  /// (simply call actions_before_adapt() which does the same thing)
+  void actions_before_distribute() {
+    delete_flux_elements(Surface_mesh_pt);
+    this->rebuild_global_mesh();
+  }
+
+  /// Actions after distribute: Rebuild the mesh of prescribed flux
+  /// elements (simply call actions_after_adapt() which does the same thing)
+  void actions_after_distribute() {
+    this->make_free_surface_elements();
+    this->rebuild_global_mesh();
+  }
+
   /// Generic desructor to clean up the memory allocated in the problem
   ~ControlledFilmProblem() {
     // Clear node storage and then delete mesh
@@ -254,10 +282,17 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
 
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
-  if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
+  if (this->communicator_pt()->my_rank() != 0) {
+    fprintf(stderr, "my_rank: %d (NOT OUTPUTTING)\n",
+            this->communicator_pt()->my_rank());
     return;
   }
+
+  fprintf(stderr, "my_rank: %d (OUTPUTTING)\n",
+          this->communicator_pt()->my_rank());
 #endif
+
+  return;
 
   // open the file
   std::ofstream file;
@@ -338,11 +373,21 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   }
 
   // Loop over the desired number of timesteps
-  ProgressBar pbar =
-      ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>);
-  pbar.start();
-  pbar.update(this->step);
+  // ProgressBar pbar =
+  //     ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT,
+  //     INTERFACE_ELEMENT>);
+  // pbar.start();
+  // pbar.update(this->step);
   for (unsigned t = 0; t < nsteps; t++) {
+
+#ifdef OOMPH_HAS_MPI
+    if (MPI_Helpers::communicator_pt()->my_rank() == 0) {
+#endif
+      fprintf(stderr, "timestep %d of %d\n", t, nsteps);
+#ifdef OOMPH_HAS_MPI
+    }
+#endif
+
     /* Use the control scheme to get the basal forcing */
     // NOTE h and q must be set to the current values
     if (control_strategy > 0) {
@@ -363,7 +408,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
-    pbar.update(this->step, this);
+    // pbar.update(this->step, this);
 
     // output interface information if required
     if (step % out_step == 0) {
@@ -372,7 +417,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     }
   }
 
-  pbar.end(this);
+  // pbar.end(this);
 } // end of timestep
 
 #endif // CONTROLLEDFILMPROBLEM_H
