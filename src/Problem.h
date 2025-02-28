@@ -228,6 +228,7 @@ public:
             this->communicator_pt()->my_rank());
     this->make_free_surface_elements();
     this->rebuild_global_mesh();
+    this->complete_build();
   }
 
   /// Generic desructor to clean up the memory allocated in the problem
