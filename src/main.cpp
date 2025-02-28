@@ -24,8 +24,13 @@ int main(int argc, char **argv) {
 
   using namespace Global_Physical_Variables;
 
+  bool distribute = true;
+
   // allow overwriting of the default values from the command line
   CommandLineArgs::setup(argc, argv);
+  CommandLineArgs::specify_command_line_flag("--no_distribute",
+                                             "streamwise length");
+
   CommandLineArgs::specify_command_line_flag("--lx", &Lx, "streamwise length");
   CommandLineArgs::specify_command_line_flag("--ly", &Ly, "spanwise length");
 
@@ -64,6 +69,10 @@ int main(int argc, char **argv) {
 
   CommandLineArgs::parse_and_assign();
 
+  if (CommandLineArgs::command_line_flag_has_been_set("--no_distribute")) {
+    distribute = false;
+  }
+
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
   if (MPI_Helpers::communicator_pt()->my_rank() == 0) {
@@ -96,9 +105,9 @@ int main(int argc, char **argv) {
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
 #ifdef OOMPH_HAS_MPI
-  // DocInfo mesh_doc_info;
-  problem.distribute();
-  // problem.check_halo_schemes(mesh_doc_info);
+  if (distribute) {
+    problem.distribute();
+  }
 #endif
 
   cout << "Problem self-test ";
