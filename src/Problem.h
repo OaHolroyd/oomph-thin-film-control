@@ -197,30 +197,32 @@ public:
     std::cout << assign_eqn_numbers() << " in the main problem" << std::endl;
   } // end of complete_build
 
-  void delete_flux_elements(Mesh *const &surface_mesh_pt) {
+  void delete_flux_elements() {
     // How many surface elements are in the surface mesh
-    unsigned n_element = surface_mesh_pt->nelement();
+    unsigned n_element = Surface_mesh_pt->nelement();
 
     // Loop over the surface elements
     for (unsigned e = 0; e < n_element; e++) {
       // Kill surface element
-      delete surface_mesh_pt->element_pt(e);
+      delete Surface_mesh_pt->element_pt(e);
     }
 
     // Wipe the mesh
-    surface_mesh_pt->flush_element_and_node_storage();
+    Surface_mesh_pt->flush_element_and_node_storage();
   }
 
   /// Actions before distribute: Wipe the mesh of prescribed flux elements
   /// (simply call actions_before_adapt() which does the same thing)
   void actions_before_distribute() {
-    delete_flux_elements(Surface_mesh_pt);
+    fprintf(stderr, "[%d] actions_before_distribute\n", this->communicator_pt()->my_rank());
+    delete_flux_elements();
     this->rebuild_global_mesh();
   }
 
   /// Actions after distribute: Rebuild the mesh of prescribed flux
   /// elements (simply call actions_after_adapt() which does the same thing)
   void actions_after_distribute() {
+    fprintf(stderr, "[%d] actions_after_distribute\n", this->communicator_pt()->my_rank());
     this->make_free_surface_elements();
     this->rebuild_global_mesh();
   }
