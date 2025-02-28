@@ -113,7 +113,8 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
   double dx = Lx / this->nx_control;
   double dy = Ly / this->ny_control;
 
-  fprintf(stderr, "[%d] nelements: %d\n", this->communicator_pt()->my_rank(), this->Surface_mesh_pt->nelement());
+  // number of elements in the mesh
+  unsigned nelement = this->Surface_mesh_pt->nelement();
 
   // get values of h in a nx_control x ny_control grid
   for (int i = 0; i < this->ny_control; i++) {
@@ -126,8 +127,41 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
       int ej = pj * nx;
       int k = j + i * this->nx_control; // linear index into the arrays
 
+      this->h[k] = -2.0; // default (impossible) value
+
       // find the surface element containing (xj, yi)
-      int e = ej + ei * nx;
+      int e;
+#ifdef OOMPH_HAS_MPI
+      // if there are multiple processors, we need to find the element
+      // containing the point
+      int has_found = 0;
+      for (e = 0; e < nelement; e++) {
+        FaceElement *el =
+            dynamic_cast<FaceElement *>(this->Surface_mesh_pt->element_pt(e));
+        int np = el->nnode_1d();
+        SpineNode *n0 = dynamic_cast<SpineNode *>(el->node_pt(0));
+        SpineNode *n1 = dynamic_cast<SpineNode *>(el->node_pt(np - 1));
+        SpineNode *n2 = dynamic_cast<SpineNode *>(el->node_pt((np - 1) * np));
+        SpineNode *n3 = dynamic_cast<SpineNode *>(el->node_pt(np * np - 1));
+
+        // check if the point lies within the four bounding nodes
+        if ((n0->x(0) <= xj) && (n0->x(1) <= yi) && (n1->x(0) >= xj) &&
+            (n1->x(1) <= yi) && (n2->x(0) <= xj) && (n2->x(1) >= yi) &&
+            (n3->x(0) >= xj) && (n3->x(1) >= yi)) {
+          has_found = 1;
+          fprintf(stderr, "[%d] (%g, %g) FOUND\n", this->communicator_pt()->my_rank(), xj, yi);
+          break;
+        }
+      }
+
+      if (!has_found) {
+        fprintf(stderr, "[%d] (%g, %g) NOT FOUND\n", this->communicator_pt()->my_rank(), xj, yi);
+        continue;
+      }
+#else
+      // if there is only one processor, we can find the element directly
+      e = ej + ei * nx;
+#endif
       FaceElement *el =
           dynamic_cast<FaceElement *>(this->Surface_mesh_pt->element_pt(e));
 
@@ -141,7 +175,6 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
 
       // find enclosing nodes
       int nnodes = el->nnode();
-      fprintf(stderr, "[%d] nnodes: %d\n", this->communicator_pt()->my_rank(), nnodes);
       for (int n = 0; n < nnodes; n++) {
         SpineNode *nn = dynamic_cast<SpineNode *>(el->node_pt(n));
         double x = nn->x(0);
@@ -176,20 +209,10 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
         }
       }
 
-      // assert(n0->x(0) <= xj && n0->x(1) <= yi);
-      // assert(n1->x(0) >= xj && n1->x(1) <= yi);
-      // assert(n2->x(0) <= xj && n2->x(1) >= yi);
-      // assert(n3->x(0) >= xj && n3->x(1) >= yi);
-
-      if ((n0->x(0) <= xj && n0->x(1) <= yi) ||
-          (n1->x(0) >= xj && n1->x(1) <= yi) ||
-          (n2->x(0) <= xj && n2->x(1) >= yi) ||
-          (n3->x(0) >= xj && n3->x(1) >= yi)) {
-        fprintf(stderr, "[%d] (%g, %g) not found\n", this->communicator_pt()->my_rank(), xj, yi);
-        continue;
-      } else {
-        fprintf(stderr, "[%d] (%g, %g) found\n", this->communicator_pt()->my_rank(), xj, yi);
-      }
+      assert(n0->x(0) <= xj && n0->x(1) <= yi);
+      assert(n1->x(0) >= xj && n1->x(1) <= yi);
+      assert(n2->x(0) <= xj && n2->x(1) >= yi);
+      assert(n3->x(0) >= xj && n3->x(1) >= yi);
 
       // convert coordinates to local coordinates
       double x0 = n0->x(0);
