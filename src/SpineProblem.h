@@ -113,6 +113,8 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
   double dx = Lx / this->nx_control;
   double dy = Ly / this->ny_control;
 
+  fprintf(stderr, "[%d] nelements: %d\n", this->communicator_pt()->my_rank(), this->Surface_mesh_pt->nelement());
+
   // get values of h in a nx_control x ny_control grid
   for (int i = 0; i < this->ny_control; i++) {
     double yi = (dy * (static_cast<double>(i) + 0.5)); // y coordinate
