@@ -184,6 +184,8 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
           (n3->x(0) >= xj && n3->x(1) >= yi)) {
         fprintf(stderr, "[%d] (%g, %g) not found\n", this->communicator_pt()->my_rank(), xj, yi);
         continue;
+      } else {
+        fprintf(stderr, "[%d] (%g, %g) found\n", this->communicator_pt()->my_rank(), xj, yi);
       }
 
       // convert coordinates to local coordinates
