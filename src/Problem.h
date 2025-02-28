@@ -55,6 +55,9 @@ protected:
   void output_mesh();
 
 public:
+  /// whether the problem has been distributed
+  bool is_distributed;
+
   /// Storage of the interface/flux/forcing at regular intervals
   /// indexed into using row-major ordering, ie h[xj + yi * nx_control]
   double *h, *qx, *qy, *f, *work;
@@ -95,6 +98,8 @@ public:
     // Use mumps if available
     // this->linear_solver_pt() = new MumpsSolver;
 #endif
+
+    this->is_distributed = false;
 
     // don't print loads of internal solver details
     this->Shut_up_in_newton_solve = true;

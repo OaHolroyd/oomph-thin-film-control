@@ -31,12 +31,12 @@ else
 	CXX=mpic++
 	LD=$(CXX)
 
-	OOMPHLIB=/storage/maths/mauvvq/oomph-lib-debug/oomph-lib
+	OOMPHLIB=/storage/maths/mauvvq/oomph-lib
 
 	WARNINGS=-Wall -Wextra -pedantic -Wno-implicit-function-declaration -Wno-unused-parameter
     CFLAGS=-O3 -Wall
-    CXXFLAGS=-O3 -Wall -std=c++17 -DgFortran -fopenmp -fsanitize=address
-    LDFLAGS=$(CXXFLAGS) -fsanitize=address
+    CXXFLAGS=-O3 -Wall -std=c++17 -DgFortran -fopenmp
+    LDFLAGS=$(CXXFLAGS)
 
     LDLIBS=-L$(OOMPHLIB)/external_distributions/mumps_and_scalapack/mumps_and_scalapack_default_installation/lib \
            -L$(OOMPHLIB)/external_distributions/boost/boost_default_installation/lib \

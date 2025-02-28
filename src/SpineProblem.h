@@ -264,6 +264,11 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
     return;
   }
 
+  // no need to gather if the domain is not distributed
+  if (!this->is_distributed) {
+    return;
+  }
+
   fprintf(stderr, "[%d] START MPI_Barrier\n", my_rank);
   MPI_Barrier(comm);
   fprintf(stderr, "[%d] END MPI_Barrier\n", my_rank);
@@ -281,7 +286,8 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
     if (my_rank == 0) {
       // receive on processor 0
       fprintf(stderr, "[%d] START MPI_Recv\n", my_rank);
-      MPI_Recv(this->work, this->nx_control * this->ny_control, MPI_DOUBLE, i, 0, comm, MPI_STATUS_IGNORE);
+      MPI_Recv(this->work, this->nx_control * this->ny_control, MPI_DOUBLE, i,
+               0, comm, MPI_STATUS_IGNORE);
       fprintf(stderr, "[%d] END MPI_Recv\n", my_rank);
 
       // copy over any data that isn't a bad value

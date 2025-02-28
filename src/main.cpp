@@ -107,6 +107,7 @@ int main(int argc, char **argv) {
 #ifdef OOMPH_HAS_MPI
   if (distribute) {
     problem.distribute();
+    problem.is_distributed = true;
   }
 #endif
 
