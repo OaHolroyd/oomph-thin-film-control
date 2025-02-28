@@ -93,7 +93,7 @@ public:
 
 #ifdef OOMPH_HAS_MUMPS
     // Use mumps if available
-    problem.linear_solver_pt() = new MumpsSolver;
+    this.linear_solver_pt() = new MumpsSolver;
 #endif
 
     // don't print loads of internal solver details
