@@ -96,8 +96,18 @@ int main(int argc, char **argv) {
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
 #ifdef OOMPH_HAS_MPI
+  DocInfo mesh_doc_info;
   problem.distribute();
+  problem.check_halo_schemes(mesh_doc_info);
 #endif
+
+  cout << "Problem self-test ";
+  if (problem.self_test() == 0) {
+    cout << "passed: Problem can be solved." << std::endl;
+  } else {
+    throw OomphLibError("Self test failed", OOMPH_CURRENT_FUNCTION,
+                        OOMPH_EXCEPTION_LOCATION);
+  }
 
   // Step up to the start of the controls
   problem.initial_condition(1, 1, 0.01, 0.8);
