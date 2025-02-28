@@ -258,21 +258,26 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
 #ifdef OOMPH_HAS_MPI
   // no need to gather if there is only one processor
   int nproc = this->communicator_pt()->nproc();
+  int my_rank = this->communicator_pt()->my_rank();
   if (nproc == 1) {
     return;
   }
 
   // gather the data onto rank 0
-  for (int i = 1; l < nproc; i++) {
+  for (int i = 1; i < nproc; i++) {
     // send from processor i to processor 0
-    MPI_Sendrecv(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0, 0,
-                 this->work, this->nx_control * this->ny_control, MPI_DOUBLE, 0,
-                 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (my_rank == 0 || my_rank == i) {
+      MPI_Sendrecv(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0,
+                   0, this->work, this->nx_control * this->ny_control,
+                   MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
 
-    // copy over any data that isn't a bad value
-    for (int k = 0; k < this->nx_control * this->ny_control; k++) {
-      if (this->work[k] != BAD_VAL) {
-        this->h[k] = this->work[k];
+    if (my_rank == 0) {
+      // copy over any data that isn't a bad value
+      for (int k = 0; k < this->nx_control * this->ny_control; k++) {
+        if (this->work[k] != BAD_VAL) {
+          this->h[k] = this->work[k];
+        }
       }
     }
   }
