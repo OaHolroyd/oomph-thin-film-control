@@ -139,34 +139,40 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
       // find the surface element containing (xj, yi)
       int e;
 #ifdef OOMPH_HAS_MPI
-      // if there are multiple processors, we need to find the element
-      // containing the point
-      int has_found = 0;
-      for (e = 0; e < nelement; e++) {
-        FaceElement *el =
-            dynamic_cast<FaceElement *>(this->Surface_mesh_pt->element_pt(e));
-        int np = el->nnode_1d();
-        SpineNode *n0 = dynamic_cast<SpineNode *>(el->node_pt(0));
-        SpineNode *n1 = dynamic_cast<SpineNode *>(el->node_pt(np - 1));
-        SpineNode *n2 = dynamic_cast<SpineNode *>(el->node_pt((np - 1) * np));
-        SpineNode *n3 = dynamic_cast<SpineNode *>(el->node_pt(np * np - 1));
+      int my_rank = this->communicator_pt()->my_rank();
+      int nproc = this->communicator_pt()->nproc();
 
-        // check if the point lies within the four bounding nodes
-        if ((n0->x(0) <= xj) && (n0->x(1) <= yi) && (n1->x(0) >= xj) &&
-            (n1->x(1) <= yi) && (n2->x(0) <= xj) && (n2->x(1) >= yi) &&
-            (n3->x(0) >= xj) && (n3->x(1) >= yi)) {
-          has_found = 1;
-          fprintf(stderr, "[%d] (%g, %g) FOUND\n",
-                  this->communicator_pt()->my_rank(), xj, yi);
-          break;
+      if (nproc == 1 || (!this->is_distributed && my_rank == 0)) {
+        e = ej + ei * nx;
+      } else if (!this->is_distributed) {
+        return;
+      } else {
+        // if there are multiple processors, we need to find the element
+        // containing the point
+        int has_found = 0;
+        for (e = 0; e < nelement; e++) {
+          FaceElement *el =
+              dynamic_cast<FaceElement *>(this->Surface_mesh_pt->element_pt(e));
+          int np = el->nnode_1d();
+          SpineNode *n0 = dynamic_cast<SpineNode *>(el->node_pt(0));
+          SpineNode *n1 = dynamic_cast<SpineNode *>(el->node_pt(np - 1));
+          SpineNode *n2 = dynamic_cast<SpineNode *>(el->node_pt((np - 1) * np));
+          SpineNode *n3 = dynamic_cast<SpineNode *>(el->node_pt(np * np - 1));
+
+          // check if the point lies within the four bounding nodes
+          if ((n0->x(0) <= xj) && (n0->x(1) <= yi) && (n1->x(0) >= xj) &&
+              (n1->x(1) <= yi) && (n2->x(0) <= xj) && (n2->x(1) >= yi) &&
+              (n3->x(0) >= xj) && (n3->x(1) >= yi)) {
+            has_found = 1;
+            break;
+          }
+        }
+
+        if (!has_found) {
+          continue;
         }
       }
 
-      if (!has_found) {
-        fprintf(stderr, "[%d] (%g, %g) NOT FOUND\n",
-                this->communicator_pt()->my_rank(), xj, yi);
-        continue;
-      }
 #else
       // if there is only one processor, we can find the element directly
       e = ej + ei * nx;
