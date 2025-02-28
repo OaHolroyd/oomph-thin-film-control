@@ -44,6 +44,16 @@ int main(int argc, char **argv) {
   CommandLineArgs::specify_command_line_flag("--nx_control", &nx_control, "streamwise control discretisation");
   CommandLineArgs::specify_command_line_flag("--ny_control", &ny_control, "spanwise control discretisation");
 
+
+#ifdef OOMPH_HAS_MPI
+  // only output if this is rank 0
+  if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
+    CommandLineArgs::doc_specified_flags();
+  }
+#else
+  CommandLineArgs::doc_specified_flags();
+#endif
+
   CommandLineArgs::parse_and_assign();
 
   // Create the control problem
