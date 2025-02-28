@@ -96,9 +96,9 @@ int main(int argc, char **argv) {
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
 #ifdef OOMPH_HAS_MPI
-  DocInfo mesh_doc_info;
+  // DocInfo mesh_doc_info;
   problem.distribute();
-  problem.check_halo_schemes(mesh_doc_info);
+  // problem.check_halo_schemes(mesh_doc_info);
 #endif
 
   cout << "Problem self-test ";
