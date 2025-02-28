@@ -259,26 +259,35 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
   // no need to gather if there is only one processor
   int nproc = this->communicator_pt()->nproc();
   int my_rank = this->communicator_pt()->my_rank();
+  MPI_Comm comm = this->communicator_pt()->mpi_comm();
   if (nproc == 1) {
     return;
   }
+
+  fprintf(stderr, "[%d] START MPI_Barrier\n", my_rank);
+  MPI_Barrier(comm);
+  fprintf(stderr, "[%d] END MPI_Barrier\n", my_rank);
 
   // gather the data onto rank 0
   for (int i = 1; i < nproc; i++) {
     // send from processor i to processor 0
     if (my_rank == 0 || my_rank == i) {
+      fprintf(stderr, "[%d] START MPI_Sendrecv\n", my_rank);
       MPI_Sendrecv(this->h, this->nx_control * this->ny_control, MPI_DOUBLE, 0,
                    0, this->work, this->nx_control * this->ny_control,
-                   MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                   MPI_DOUBLE, 0, 0, comm, MPI_STATUS_IGNORE);
+      fprintf(stderr, "[%d] END MPI_Sendrecv\n", my_rank);
     }
 
     if (my_rank == 0) {
       // copy over any data that isn't a bad value
+      fprintf(stderr, "[%d] START copy data\n", my_rank);
       for (int k = 0; k < this->nx_control * this->ny_control; k++) {
         if (this->work[k] != BAD_VAL) {
           this->h[k] = this->work[k];
         }
       }
+      fprintf(stderr, "[%d] END copy data\n", my_rank);
     }
   }
 #endif
