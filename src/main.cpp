@@ -47,9 +47,6 @@ int main(int argc, char **argv) {
   CommandLineArgs::parse_and_assign();
   CommandLineArgs::doc_specified_flags();
 
-  fprintf(stderr, "lx: %lf\n", Lx);
-  return 0;
-
   // Create the control problem
   int m_control = 7;
   int p_control = 1;
