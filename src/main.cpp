@@ -67,6 +67,15 @@ int main(int argc, char **argv) {
 
   CommandLineArgs::parse_and_assign();
 
+  // output the values
+  if (CommandLineArgs::command_line_flag_has_been_set("--lx")) {
+    fprintf(stderr, "Lx = %g\n", Lx);
+  }
+
+#ifdef OOMPH_HAS_MPI
+  MPI_Helpers::finalize();
+#endif
+
   return 0;
 
   // Create the control problem
