@@ -137,7 +137,7 @@ public:
         }
       }
 
-      Vector<unsigned> partition = this->distribute(partition);
+      this->distribute(partition);
       this->is_distributed = true;
     }
 #endif
