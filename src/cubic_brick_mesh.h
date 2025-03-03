@@ -300,23 +300,6 @@ void CubicBrickMesh<ELEMENT>::set_periodic_node_dist(Node *node_pt) {
   const double y = node_pt->x(1);
   const double z = node_pt->x(2);
 
-  int direction;
-  if (x == Xmax) {
-    direction == 0;
-  }
-
-  // can only be periodic in the x or y directions
-  assert(direction == 0 || direction == 1);
-
-  // the node point must be on the far boundary in the direction specified
-  if (direction == 0) {
-    // x-periodic, node must be on right boundary (2)
-    assert(x == Xmax);
-  } else {
-    // y-periodic, node must be on rear boundary (3)
-    assert(y == Ymax);
-  }
-
   // find the corresponding element and node coordinates on the other side of
   // the domain
   double op_x, op_y, op_z;
