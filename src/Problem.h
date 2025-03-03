@@ -339,7 +339,8 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
   // Loop over the desired number of timesteps
   ProgressBar pbar =
-      ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>);
+      ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>,
+                  1.0, this->communicator_pt()->my_rank());
   pbar.start();
   pbar.update(this->step);
   for (unsigned t = 0; t < nsteps; t++) {
