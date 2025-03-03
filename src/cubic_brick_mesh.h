@@ -56,6 +56,9 @@ protected:
   void set_periodic_node(Node *node_pt, unsigned long el_num,
                          unsigned direction);
 
+  /// Helper function to reset periodic boundaries after mesh distribution
+  void set_periodic_node_dist(Node *node_pt);
+
 public:
   /// Constructor: Pass the number of elements in the x, y, and z directions
   CubicBrickMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
@@ -141,6 +144,16 @@ public:
   /// periodic in the x or y direction, and if (e, n) is not on the boundary.
   void get_periodic_element_node(unsigned e, unsigned n, unsigned *periodic_e,
                                  unsigned *periodic_n);
+
+  /// reset the periodic nodes after mesh distribution
+  void reset_periodic_nodes() {
+    // Loop over the nodes
+    unsigned nnod = this->nnode();
+    for (unsigned j = 0; j < nnod; j++) {
+      Node *nod_pt = this->node_pt(j);
+      set_periodic_node_dist(nod_pt);
+    }
+  }
 };
 
 template <class ELEMENT>
@@ -204,7 +217,7 @@ void CubicBrickMesh<ELEMENT>::get_periodic_element_node(unsigned e, unsigned n,
 }
 
 /// given a node on a boundary, the element number containing it and periodic
-/// direction (0 for x, 1 for y, 2 for z), this function returns the pointer to
+/// direction (0 for x, 1 for y, 2 for z), this function sets the pointer to
 /// the periodic image of the node on the other side of the domain
 template <class ELEMENT>
 void CubicBrickMesh<ELEMENT>::set_periodic_node(Node *node_pt,
@@ -260,6 +273,81 @@ void CubicBrickMesh<ELEMENT>::set_periodic_node(Node *node_pt,
     Node *n = op_element_pt->node_pt(i);
     if (n->x(0) == op_x && n->x(1) == op_y && n->x(2) == op_z) {
       op_node_pt = n;
+      break;
+    }
+  }
+
+  // ensure that we found the node
+  assert(op_node_pt != nullptr);
+
+  // set the periodic node
+  node_pt->make_periodic(op_node_pt);
+}
+
+/// THIS IS USED AFTER THE MESH HAS BEEN DISTRIBUTED. It resets the periodic
+/// linking of the nodes.
+template <class ELEMENT>
+void CubicBrickMesh<ELEMENT>::set_periodic_node_dist(Node *node_pt) {
+  // extract the coordinates of the node
+  const double x = node_pt->x(0);
+  const double y = node_pt->x(1);
+  const double z = node_pt->x(2);
+
+  int direction;
+  if (x == Xmax) {
+    direction == 0;
+  }
+
+  // can only be periodic in the x or y directions
+  assert(direction == 0 || direction == 1);
+
+  // the node point must be on the far boundary in the direction specified
+  if (direction == 0) {
+    // x-periodic, node must be on right boundary (2)
+    assert(x == Xmax);
+  } else {
+    // y-periodic, node must be on rear boundary (3)
+    assert(y == Ymax);
+  }
+
+  // find the corresponding element and node coordinates on the other side of
+  // the domain
+  double op_x, op_y, op_z;
+  if (x == Xmax && y == Ymax && this->Xperiodic && this->Yperiodic) {
+    // corner periodic
+    op_x = Xmin;
+    op_y = Ymin;
+    op_z = z;
+  } else if (x == Xmax && this->Xperiodic) {
+    // x-periodic
+    op_x = Xmin;
+    op_y = y;
+    op_z = z;
+  } else if (y == Ymax && this->Yperiodic) {
+    // y-periodic
+    op_x = x;
+    op_y = Ymin;
+    op_z = z;
+  } else {
+    // not periodic
+    return;
+  }
+
+  // since the mesh has been distributed, we need to search for the node rather
+  // than find it directly
+  Node *op_node_pt = nullptr;
+  int nelem = this->nelement();
+  for (int e = 0; e < nelem; e++) {
+    FiniteElement *el_pt = this->finite_element_pt(e);
+    for (unsigned i = 0; i < el_pt->nnode(); ++i) {
+      Node *n = el_pt->node_pt(i);
+      if (n->x(0) == op_x && n->x(1) == op_y && n->x(2) == op_z) {
+        op_node_pt = n;
+        break;
+      }
+    }
+
+    if (op_node_pt != nullptr) {
       break;
     }
   }

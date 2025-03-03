@@ -117,7 +117,8 @@ public:
 
       // assign procs to elements
       int ncol = nx / nproc;
-      Vector<unsigned> partition = Vector<unsigned>(this->Bulk_mesh_pt->nelement());
+      Vector<unsigned> partition =
+          Vector<unsigned>(this->Bulk_mesh_pt->nelement());
       for (int y = 0; y < ny; y++) {
         int rem = nx - ncol * nproc;
         unsigned p = 0;
@@ -152,6 +153,29 @@ public:
 
   /// override the set_hqf function to use information from the Spine Mesh
   void set_hqf(int use_control);
+
+  /// Actions before distribute: Wipe the mesh of prescribed flux elements
+  /// (simply call actions_before_adapt() which does the same thing)
+  void actions_before_distribute() {
+    fprintf(stderr, "[%d] actions_before_distribute\n",
+            this->communicator_pt()->my_rank());
+    this->delete_flux_elements();
+    this->rebuild_global_mesh();
+  }
+
+  /// Actions after distribute: Rebuild the mesh of prescribed flux
+  /// elements (simply call actions_after_adapt() which does the same thing)
+  void actions_after_distribute() {
+    fprintf(stderr, "[%d] actions_after_distribute\n",
+            this->communicator_pt()->my_rank());
+
+    // TODO: need to relink periodic stuff here
+    this->reset_periodic_nodes();
+
+    this->make_free_surface_elements();
+    this->rebuild_global_mesh();
+    this->complete_build();
+  }
 
 private:
   int nx, ny;

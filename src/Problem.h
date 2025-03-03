@@ -217,25 +217,6 @@ public:
     Surface_mesh_pt->flush_element_and_node_storage();
   }
 
-  /// Actions before distribute: Wipe the mesh of prescribed flux elements
-  /// (simply call actions_before_adapt() which does the same thing)
-  void actions_before_distribute() {
-    fprintf(stderr, "[%d] actions_before_distribute\n",
-            this->communicator_pt()->my_rank());
-    delete_flux_elements();
-    this->rebuild_global_mesh();
-  }
-
-  /// Actions after distribute: Rebuild the mesh of prescribed flux
-  /// elements (simply call actions_after_adapt() which does the same thing)
-  void actions_after_distribute() {
-    fprintf(stderr, "[%d] actions_after_distribute\n",
-            this->communicator_pt()->my_rank());
-    this->make_free_surface_elements();
-    this->rebuild_global_mesh();
-    this->complete_build();
-  }
-
   /// Generic desructor to clean up the memory allocated in the problem
   ~ControlledFilmProblem() {
     // Clear node storage and then delete mesh
