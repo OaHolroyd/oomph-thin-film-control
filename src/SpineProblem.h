@@ -68,7 +68,8 @@ public:
   SpineControlledFilmProblem(const unsigned &nx, const unsigned &ny,
                              const unsigned &nz, const int &nx_control,
                              const int &ny_control, const int &m_control,
-                             const int &p_control, const bool &distribute = true)
+                             const int &p_control,
+                             const bool &distribute = true)
       : ControlledFilmProblem<ELEMENT,
                               SpineSurfaceFluidInterfaceElement<ELEMENT>>(
             nx_control, ny_control, m_control, p_control) {
@@ -100,25 +101,44 @@ public:
     this->is_distributed = false;
 #ifdef OOMPH_HAS_MPI
     if (distribute) {
-      Vector<unsigned> partition = this->distribute();
-      this->is_distributed = true;
+      // come up with a partitioning of the mesh that means that any periodic
+      // boundaries are not split between processors. This requires splitting
+      // the mesh into strips in the y-direction, with the first strip wrapping
+      // over the periodic boundary in the x-direction.
 
-      int my_rank = this->communicator_pt()->my_rank();
-
-      int len = partition.size();
-      for (int i = 0; i < len; i++) {
-        if (my_rank != 0) {
-          continue;
-        }
-
-        ELEMENT *el = dynamic_cast<ELEMENT *>(this->Bulk_mesh_pt->element_pt(i)); // get the element
-        Node *n = el->node_pt(13); // get the node at the centre of the element
-
-        double x = n->x(0);
-        double y = n->x(1);
-        double z = n->x(2);
-        fprintf(stderr, "[%d] %d, (%g, %g, %g): %d\n", my_rank, i, x, y, z, partition[i]);
+      // this requires that 1 < nproc <= nx/2
+      int nproc = this->communicator_pt()->nproc();
+      if (nproc == 1) {
+        throw std::runtime_error("Cannot distribute with only one processor");
       }
+      if (nproc > nx / 2) {
+        throw std::runtime_error("Too many processors for the mesh");
+      }
+
+      // assign procs to elements
+      int nelements = this->Bulk_mesh_pt->nelement();
+      int ncol = nx / nproc;
+      Vector<unsigned> partition = Vector<unsigned>(nelement);
+      for (int y = 0; y < ny; y++) {
+        int rem = nx - ncol * nproc;
+        unsigned p = 0;
+        int count = ncol + (rem > 0) ? 1 : 0;
+        for (int x = 0; x < nx; x++) {
+          int xshift = (nx + x - (ncol / 2)) % nx;
+          int k = xshift + y * nx; // linear element index
+          partition[k] = p;
+          count--;
+
+          if (count == 0) {
+            p++;
+            rem--;
+            count = ncol + (rem > 0) ? 1 : 0;
+          }
+        }
+      }
+
+      Vector<unsigned> partition = this->distribute(partition);
+      this->is_distributed = true;
     }
 #endif
   }
