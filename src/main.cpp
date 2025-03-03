@@ -18,30 +18,60 @@ using namespace oomph;
 int main(int argc, char **argv) {
   using namespace Global_Physical_Variables;
 
-#ifdef CR_ELEMENT
-#define FLUID_ELEMENT QCrouzeixRaviartElement<2>
-#else
-#define FLUID_ELEMENT QTaylorHoodElement<2>
-#endif
+  // allow overwriting of the default values from the command line
+  CommandLineArgs::setup(argc, argv);
+  CommandLineArgs::specify_command_line_flag("--no_distribute",
+                                             "streamwise length");
+
+  CommandLineArgs::specify_command_line_flag("--lx", &Lx, "streamwise length");
+
+  CommandLineArgs::specify_command_line_flag("--re", &Re, "Reynolds number");
+  CommandLineArgs::specify_command_line_flag("--ca", &Ca, "capillary number");
+  CommandLineArgs::specify_command_line_flag("--theta", &Theta,
+                                             "incline angle");
+
+  CommandLineArgs::specify_command_line_flag("--tburn", &tburn, "burn in time");
+  CommandLineArgs::specify_command_line_flag("--dtburn", &dtburn,
+                                             "time step during burn");
+  CommandLineArgs::specify_command_line_flag("--tcontrol", &tcontrol,
+                                             "control time");
+  CommandLineArgs::specify_command_line_flag("--dtcontrol", &dtcontrol,
+                                             "time step during control");
+
+  CommandLineArgs::specify_command_line_flag("--nx", &nx,
+                                             "streamwise discretisation");
+  CommandLineArgs::specify_command_line_flag("--ny", &ny,
+                                             "vertical discretisation");
+  CommandLineArgs::specify_command_line_flag(
+      "--nx_control", &nx_control, "streamwise control discretisation");
+
+  CommandLineArgs::parse_and_assign();
+  CommandLineArgs::doc_specified_flags();
+
+  // output the values
+  fprintf(stderr, "Lx = %g\n", Lx);
+  fprintf(stderr, "Re = %g\n", Re);
+  fprintf(stderr, "Ca = %g\n", Ca);
+  fprintf(stderr, "Theta = %g\n", Theta);
+  fprintf(stderr, "tburn = %g\n", tburn);
+  fprintf(stderr, "dtburn = %g\n", dtburn);
+  fprintf(stderr, "tcontrol = %g\n", tcontrol);
+  fprintf(stderr, "dtcontrol = %g\n", dtcontrol);
+  fprintf(stderr, "nx = %d\n", nx);
+  fprintf(stderr, "ny = %d\n", ny);
+  fprintf(stderr, "nx_control = %d\n", nx_control);
 
   // Create the control problem
-  unsigned nx = 100;
-  unsigned ny = 6;
-  int n_control = 100;
   int m_control = 7;
   int p_control = 1;
-  SpineControlledFilmProblem<SpineElement<FLUID_ELEMENT>, BDF<2>> problem(
-      nx, ny, n_control, m_control, p_control);
+  SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<2>>, BDF<2>>
+      problem(nx, ny, nx_control, m_control, p_control);
 
   // Step up to the start of the controls
   problem.initial_condition(1, 0.01);
-  double tburn = 200.0;
-  double dtburn = 0.1;
   problem.assign_initial_values_impulsive(dtburn);
   problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 10, 0);
 
   // Step with controls turned on
-  double tcontrol = 100.0;
-  double dt = 0.1;
-  problem.timestep(dt, static_cast<int>(tcontrol / dt), 10, 1);
+  problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 10, 1);
 }
