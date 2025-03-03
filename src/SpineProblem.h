@@ -170,7 +170,8 @@ public:
             this->communicator_pt()->my_rank());
 
     // TODO: need to relink periodic stuff here
-    this->reset_periodic_nodes();
+    dynamic_cast<SpineFilmMesh<ELEMENT> *>(this->Bulk_mesh_pt)
+        ->reset_periodic_nodes();
 
     this->make_free_surface_elements();
     this->rebuild_global_mesh();
