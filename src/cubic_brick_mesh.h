@@ -154,6 +154,13 @@ public:
       set_periodic_node_dist(nod_pt);
     }
   }
+
+  void make_periodic(bool Xperiodic, bool Yperiodic) {
+    this->Xperiodic = Xperiodic;
+    this->Yperiodic = Yperiodic;
+
+    reset_periodic_nodes();
+  }
 };
 
 template <class ELEMENT>

@@ -27,6 +27,9 @@ public:
   /**
    * Constructor for the spine inclined plane mesh
    *
+   * NOTE that we don't assign periodicity or build the spines here. This must
+   * be done later (to allow for distributed meshes).
+   *
    * @param nx Number of elements in the x direction
    * @param ny Number of elements in the y direction
    * @param nz Number of elements in the z direction
@@ -38,8 +41,8 @@ public:
   SpineFilmMesh(const unsigned &nx, const unsigned &ny, const unsigned &nz,
                 const double &lx, const double &ly, const double &lz,
                 TimeStepper *time_stepper_pt)
-      : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, true, true,
-                                           time_stepper_pt) {
+      : SingleLayerCubicSpineMesh<ELEMENT>(nx, ny, nz, lx, ly, lz, false, false,
+                                           false, time_stepper_pt) {
   } // end of constructor
 };
 
@@ -79,8 +82,17 @@ public:
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    this->Bulk_mesh_pt = new SpineFilmMesh<ELEMENT>(nx, ny, nz, Lx, Ly, 1.0,
-                                                    this->time_stepper_pt());
+    SpineFilmMesh<ELEMENT> spine_mesh = new SpineFilmMesh<ELEMENT>(
+        nx, ny, nz, Lx, Ly, 1.0, this->time_stepper_pt());
+    this->Bulk_mesh_pt = spine_mesh;
+
+#ifndef OOMPH_HAS_MPI
+    // if not distributed, we should make the mesh periodic now and build the
+    // spines
+    spine_mesh->make_periodic(true, true);
+    spine_mesh->build_spines();
+#endif
+
     this->nx = nx;
     this->ny = ny;
 
@@ -139,6 +151,10 @@ public:
 
       this->distribute(partition);
       this->is_distributed = true;
+    } else {
+      // make the mesh periodic
+      spine_mesh->make_periodic(true, true);
+      spine_mesh->build_spines();
     }
 #endif
   }
@@ -171,9 +187,12 @@ public:
     fprintf(stderr, "[%d] actions_after_distribute\n",
             this->communicator_pt()->my_rank());
 
-    // TODO: need to relink periodic stuff here
+    // define periodicity
     dynamic_cast<SpineFilmMesh<ELEMENT> *>(this->Bulk_mesh_pt)
-        ->reset_periodic_nodes();
+        ->make_periodic(true, true);
+
+    // make the spines
+    dynamic_cast<SpineFilmMesh<ELEMENT> *>(this->Bulk_mesh_pt)->build_spines();
 
     this->make_free_surface_elements();
     this->rebuild_global_mesh();

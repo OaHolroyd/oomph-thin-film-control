@@ -27,6 +27,7 @@ public:
   SingleLayerCubicSpineMesh(
       const unsigned &nx, const unsigned &ny, const unsigned &nz,
       const double &lx, const double &ly, const double &h,
+      const bool &build = true,
       TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper);
 
   /// Constructor: Pass number of elements in x-direction, number of
@@ -38,7 +39,11 @@ public:
       const unsigned &nx, const unsigned &ny, const unsigned &nz,
       const double &lx, const double &ly, const double &h,
       const bool &periodic_in_x, const bool &periodic_in_y,
+      const bool &build = true,
       TimeStepper *time_stepper_pt = &Mesh::Default_TimeStepper);
+
+  /// build the spines
+  void build_spines() { this->build_single_layer_mesh(this->time_stepper_pt); }
 
   /// General node update function implements pure virtual function
   /// defined in SpineMesh base class and performs specific node update
@@ -53,6 +58,8 @@ public:
   }
 
 protected:
+  TimeStepper *time_stepper_pt;
+
   /// Helper function to build a single spine for the nth node of element e
   virtual void build_spine(unsigned e, unsigned n);
 
@@ -75,7 +82,7 @@ protected:
 template <class ELEMENT>
 SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
-    const double &lx, const double &ly, const double &h,
+    const double &lx, const double &ly, const double &h, const bool &build,
     TimeStepper *time_stepper_pt)
     : CubicBrickMesh<ELEMENT>(nx, ny, nz, lx, ly, h, true, time_stepper_pt) {
   // Mesh can only be built with 3D Qelements.
@@ -85,7 +92,10 @@ SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(
   MeshChecker::assert_geometric_element<SpineFiniteElement, ELEMENT>(3);
 
   // Now build the single layer mesh on top of the existing mesh
-  build_single_layer_mesh(time_stepper_pt);
+  this->time_stepper_pt = time_stepper_pt;
+  if (build) {
+    build_single_layer_mesh(time_stepper_pt);
+  }
 }
 
 //===========================================================================
@@ -99,7 +109,7 @@ template <class ELEMENT>
 SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(
     const unsigned &nx, const unsigned &ny, const unsigned &nz,
     const double &lx, const double &ly, const double &h,
-    const bool &periodic_in_x, const bool &periodic_in_y,
+    const bool &periodic_in_x, const bool &periodic_in_y, const bool &build,
     TimeStepper *time_stepper_pt)
     : CubicBrickMesh<ELEMENT>(nx, ny, nz, lx, ly, h, periodic_in_x,
                               periodic_in_y, true, time_stepper_pt) {
@@ -110,12 +120,15 @@ SingleLayerCubicSpineMesh<ELEMENT>::SingleLayerCubicSpineMesh(
   MeshChecker::assert_geometric_element<SpineFiniteElement, ELEMENT>(3);
 
   // Now build the single layer mesh on top of the existing mesh
-  build_single_layer_mesh(time_stepper_pt);
+  if (build) {
+    build_single_layer_mesh(time_stepper_pt);
+  }
 }
 
 template <class ELEMENT>
 void SingleLayerCubicSpineMesh<ELEMENT>::build_spine(const unsigned e,
                                                      const unsigned n) {
+
   // Read out the number of elements in the x-direction
   unsigned n_x = this->Nx;
   // Read out the number of elements in the y-direction
@@ -125,21 +138,27 @@ void SingleLayerCubicSpineMesh<ELEMENT>::build_spine(const unsigned e,
   // Read out number of linear points in the element
   unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
-  // Check if this spine is actually on a periodic boundary
-  if (this->Xperiodic && this->Yperiodic && (e == (n_x * n_y - 1)) &&
-      (n == (n_p * n_p - 1))) {
-    match_spine_periodic(e, n, 'c');
-    return;
-  }
+  // decide whether this is a periodic point
+  {
+    SpineNode *nod_pt = element_node_pt(e, n);
+    double x = nod_pt->x(0);
+    double y = nod_pt->x(1);
 
-  if (this->Xperiodic && ((e % n_x) == (n_x - 1)) && ((n % n_p) == (n_p - 1))) {
-    match_spine_periodic(e, n, 'x');
-    return;
-  }
+    if (this->Xperiodic && this->Yperiodic && x == this->Xmax &&
+        y == this->Ymax && (n == (n_p * n_p - 1))) {
+      match_spine_periodic(e, n, 'c');
+      return;
+    }
 
-  if (this->Yperiodic && (e >= ((n_y - 1) * n_x)) && (n >= ((n_p - 1) * n_p))) {
-    match_spine_periodic(e, n, 'y');
-    return;
+    if (this->Xperiodic && (x == this->Xmax) && ((n % n_p) == (n_p - 1))) {
+      match_spine_periodic(e, n, 'x');
+      return;
+    }
+
+    if (this->Yperiodic && (y == this->Ymax) && (n >= ((n_p - 1) * n_p))) {
+      match_spine_periodic(e, n, 'y');
+      return;
+    }
   }
 
   // Assign the new spine with length h
@@ -189,21 +208,38 @@ void SingleLayerCubicSpineMesh<ELEMENT>::match_spine_periodic(const unsigned e,
   // Read out number of linear points in the element
   unsigned n_p = dynamic_cast<ELEMENT *>(finite_element_pt(0))->nnode_1d();
 
-  // find the corresponding element/node/spine on the matching boundary
-  unsigned e_periodic, n_periodic;
+  double x = element_node_pt(e, n)->x(0);
+  double y = element_node_pt(e, n)->x(1);
+
+  // find the corresponding node index on the matching boundary
+  unsigned n_periodic;
+  double x_periodic, y_periodic;
   Spine *spine_pt_periodic;
   if (mode == 'x') {
-    e_periodic = e - (this->Nx - 1);
     n_periodic = n - (this->Np - 1);
+    x_periodic = this->Xmin;
+    y_periodic = y;
   } else if (mode == 'y') {
-    e_periodic = e % n_x;
     n_periodic = n % n_p;
+    x_periodic = x;
+    y_periodic = this->Ymin;
   } else if (mode == 'c') {
-    e_periodic = 0;
     n_periodic = 0;
+    x_periodic = this->Xmin;
+    y_periodic = this->Ymin;
   } else {
     throw OomphLibError("Invalid mode in match_spine_periodic",
                         OOMPH_CURRENT_FUNCTION, OOMPH_EXCEPTION_LOCATION);
+  }
+
+  // iterate through all the elements to find the periodic counterpart
+  unsigned e_periodic = 0;
+  for (unsigned long l = 0; l < this->nelement(); l++) {
+    if (element_node_pt(l, n_periodic)->x(0) == x_periodic &&
+        element_node_pt(l, n_periodic)->x(1) == y_periodic) {
+      break;
+    }
+    e_periodic = l;
   }
   spine_pt_periodic = element_node_pt(e_periodic, n_periodic)->spine_pt();
 
