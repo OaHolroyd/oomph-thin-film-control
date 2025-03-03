@@ -116,9 +116,8 @@ public:
       }
 
       // assign procs to elements
-      int nelements = this->Bulk_mesh_pt->nelement();
       int ncol = nx / nproc;
-      Vector<unsigned> partition = Vector<unsigned>(nelement);
+      Vector<unsigned> partition = Vector<unsigned>(this->Bulk_mesh_pt->nelement());
       for (int y = 0; y < ny; y++) {
         int rem = nx - ncol * nproc;
         unsigned p = 0;
