@@ -82,7 +82,7 @@ public:
     this->add_time_stepper_pt(new TIMESTEPPER);
 
     // create the bulk mesh
-    SpineFilmMesh<ELEMENT> spine_mesh = new SpineFilmMesh<ELEMENT>(
+    SpineFilmMesh<ELEMENT> *spine_mesh = new SpineFilmMesh<ELEMENT>(
         nx, ny, nz, Lx, Ly, 1.0, this->time_stepper_pt());
     this->Bulk_mesh_pt = spine_mesh;
 
