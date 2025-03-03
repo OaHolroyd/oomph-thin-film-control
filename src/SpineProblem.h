@@ -157,10 +157,12 @@ public:
   /// Actions before distribute: Wipe the mesh of prescribed flux elements
   /// (simply call actions_before_adapt() which does the same thing)
   void actions_before_distribute() {
-    fprintf(stderr, "[%d] actions_before_distribute\n",
+    fprintf(stderr, "[%d] actions_before_distribute START\n",
             this->communicator_pt()->my_rank());
     this->delete_flux_elements();
     this->rebuild_global_mesh();
+    fprintf(stderr, "[%d] actions_before_distribute END\n",
+            this->communicator_pt()->my_rank());
   }
 
   /// Actions after distribute: Rebuild the mesh of prescribed flux
