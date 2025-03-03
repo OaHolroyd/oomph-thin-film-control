@@ -107,9 +107,12 @@ public:
 
       int len = partition.size();
       for (int i = 0; i < len; i++) {
-        double x = this->Bulk_mesh_pt->element_node_pt(i, 13)->x(0);
-        double y = this->Bulk_mesh_pt->element_node_pt(i, 13)->x(1);
-        double z = this->Bulk_mesh_pt->element_node_pt(i, 13)->x(2);
+        ELEMENT *el = dynamic_cast<ELEMENT *>(this->Bulk_mesh_pt->element_pt(i)); // get the element
+        Node *n = el->node_pt(13); // get the node at the centre of the element
+
+        double x = n->x(0);
+        double y = n->x(1);
+        double z = n->x(2);
         fprintf(stderr, "[%d] %d, (%g, %g, %g): %d\n", my_rank, i, x, y, z, partition[i]);
       }
     }
