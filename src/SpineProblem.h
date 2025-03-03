@@ -107,6 +107,10 @@ public:
 
       int len = partition.size();
       for (int i = 0; i < len; i++) {
+        if (my_rank != 0) {
+          continue;
+        }
+
         ELEMENT *el = dynamic_cast<ELEMENT *>(this->Bulk_mesh_pt->element_pt(i)); // get the element
         Node *n = el->node_pt(13); // get the node at the centre of the element
 
