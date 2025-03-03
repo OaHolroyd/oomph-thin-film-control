@@ -102,14 +102,7 @@ int main(int argc, char **argv) {
   int m_control = 7;
   int p_control = 1;
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
-      problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
-
-#ifdef OOMPH_HAS_MPI
-  if (distribute) {
-    problem.distribute();
-    problem.is_distributed = true;
-  }
-#endif
+      problem(nx, ny, nz, nx_control, ny_control, m_control, p_control, distribute);
 
   cout << "Problem self-test ";
   if (problem.self_test() == 0) {

@@ -63,11 +63,12 @@ public:
    * system
    * @param m_control the number of actuators
    * @param p_control the number of observers
+   * @param distribute whether to distribute the mesh
    */
   SpineControlledFilmProblem(const unsigned &nx, const unsigned &ny,
                              const unsigned &nz, const int &nx_control,
                              const int &ny_control, const int &m_control,
-                             const int &p_control)
+                             const int &p_control, const bool &distribute = true)
       : ControlledFilmProblem<ELEMENT,
                               SpineSurfaceFluidInterfaceElement<ELEMENT>>(
             nx_control, ny_control, m_control, p_control) {
@@ -94,6 +95,25 @@ public:
 
     // complete the build of the problem
     this->complete_build();
+
+    // distribute the mesh if required (and MPI is available)
+    this->is_distributed = false;
+#ifdef OOMPH_HAS_MPI
+    if (distribute) {
+      Vector<unsigned> partition = this->distribute();
+      this->is_distributed = true;
+
+      int my_rank = this->communicator_pt()->my_rank();
+
+      int len = partition.size();
+      for (int i = 0; i < len; i++) {
+        double x = this->Bulk_mesh_pt->element_pt(i)->node_pt(0)->x(0);
+        double y = this->Bulk_mesh_pt->element_pt(i)->node_pt(0)->x(1);
+        double z = this->Bulk_mesh_pt->element_pt(i)->node_pt(0)->x(2);
+        fprintf(stderr, "[%d] %d, (%g, %g, %g): %d\n", my_rank, i, x, y, z, partition[i]);
+      }
+    }
+#endif
   }
 
   /// Spine heights/lengths are unknowns in the problem so their
