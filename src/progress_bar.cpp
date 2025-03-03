@@ -179,6 +179,13 @@ void ProgressBar::start() {
 }
 
 void ProgressBar::update(int progress, void *data, bool force) {
+#ifdef OOMPH_HAS_MPI
+  // only output if this is rank 0
+  if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
+    return;
+  }
+#endif
+
   // calculate progress
   this->progress = static_cast<float>(progress) / static_cast<float>(this->total);
 
@@ -195,6 +202,7 @@ void ProgressBar::update(int progress, void *data, bool force) {
   this->update_bar();
   if (this->post_print != nullptr) {
     this->post_print(data);
+    fprintf(stderr, "\n");
   }
 
   // flush
@@ -213,8 +221,8 @@ void ProgressBar::end(void *data) {
 void ProgressBar::update_bar() {
   int reps = static_cast<int>(this->width * this->progress);
 
-  // restart line
-  fprintf(stderr, "\r");
+  // new line
+  fprintf(stderr, "\n");
 
   // percentage complete
   fprintf(stderr, "%3.0f%%", this->progress * 100.0);
