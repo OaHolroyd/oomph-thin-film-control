@@ -49,15 +49,15 @@ int main(int argc, char **argv) {
   CommandLineArgs::specify_command_line_flag("--nz", &nz,
                                              "vertical discretisation");
   CommandLineArgs::specify_command_line_flag(
-      "--nx_control", &nx_control, "streamwise control discretisation");
-  CommandLineArgs::specify_command_line_flag("--ny_control", &ny_control,
+      "--nxcontrol", &nx_control, "streamwise control discretisation");
+  CommandLineArgs::specify_command_line_flag("--nycontrol", &ny_control,
                                              "spanwise control discretisation");
-  CommandLineArgs::specify_command_line_flag("--m_control", &m_control,
+  CommandLineArgs::specify_command_line_flag("--mcontrol", &m_control,
                                              "number of actuators");
-  CommandLineArgs::specify_command_line_flag("--p_control", &p_control,
+  CommandLineArgs::specify_command_line_flag("--pcontrol", &p_control,
                                              "number of observers");
 
-  CommandLineArgs::specify_command_line_flag("--no_mumps",
+  CommandLineArgs::specify_command_line_flag("--nomumps",
                                              "Don't use the MUMPS solver");
 
   CommandLineArgs::parse_and_assign();
