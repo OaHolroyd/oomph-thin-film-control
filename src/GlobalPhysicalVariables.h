@@ -56,6 +56,12 @@ unsigned nx_control = 40;
 /// The number of points in th control system in the y direction
 unsigned ny_control = 20;
 
+/// The number of actuators in the control system
+unsigned m_control = 32;
+
+/// The number of observers in the control system
+unsigned p_control = 32;
+
 /// The Vector direction of gravity (x/y/z, ie streamwise, spanwise, normal)
 Vector<double> G = {2.0, 0.0, -2.0 / tan(Theta)}; // x is streamwise, y is spanwise, z is normal
 

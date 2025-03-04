@@ -52,6 +52,10 @@ int main(int argc, char **argv) {
       "--nx_control", &nx_control, "streamwise control discretisation");
   CommandLineArgs::specify_command_line_flag("--ny_control", &ny_control,
                                              "spanwise control discretisation");
+  CommandLineArgs::specify_command_line_flag("--m_control", &m_control,
+                                             "number of actuators");
+  CommandLineArgs::specify_command_line_flag("--p_control", &p_control,
+                                             "number of observers");
 
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
@@ -84,28 +88,31 @@ int main(int argc, char **argv) {
     fprintf(stderr, "nz = %d\n", nz);
     fprintf(stderr, "nx_control = %d\n", nx_control);
     fprintf(stderr, "ny_control = %d\n", ny_control);
+    fprintf(stderr, "m_control = %d\n", m_control);
+    fprintf(stderr, "p_control = %d\n", p_control);
 
 #ifdef OOMPH_HAS_MPI
   }
 #endif
 
   // Create the control problem
-  int m_control = 7;
-  int p_control = 1;
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
 
-  // Step up to the start of the controls
+  // Initial condition
   problem.initial_condition(1, 1, 0.01, 0.8);
   problem.assign_initial_values_impulsive(
       dtburn); // TODO: mucks up the initial condition
-  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, 0);
+
+  // Step up to the start of the controls
+  if (tburn > 0.0) {
+    problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, UNCONTROLLED);
+  }
 
   // Step with controls turned on
-  // if (tcontrol > 0.0) {
-  //   problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1,
-  //   1);
-  // }
+  if (tcontrol > 0.0) {
+    problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1, PAIR);
+  }
 
   // Finalise MPI
 #ifdef OOMPH_HAS_MPI

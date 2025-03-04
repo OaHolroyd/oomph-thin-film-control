@@ -135,7 +135,7 @@ public:
    * @param control_strategy the control strategy to use (0 for none)
    */
   void timestep(const double &dt, const unsigned &nsteps, int out_step = 1,
-                int control_strategy = 0);
+                control_t control_strategy = UNCONTROLLED);
 
   // Make the free surface elements on the top surface
   void make_free_surface_elements() {
@@ -321,7 +321,7 @@ void prog_bar_print_3d(void *problem) {
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     const double &dt, const unsigned &nsteps, int out_step,
-    int control_strategy) {
+    control_t control_strategy) {
   // Need to use the Global variables here
   using namespace Global_Physical_Variables;
 
@@ -331,32 +331,45 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   this->out_step++;
 
   // if required, set up control variables
-  if (control_strategy > 0) {
-    throw std::runtime_error("Control not implemented in 3D");
-    // control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx,
-    // n_control, Re, Ca, Theta);
+  if (control_strategy != UNCONTROLLED) {
+#ifdef OOMPH_HAS_MPI
+    if (this->communicator_pt()->my_rank() == 0) {
+#endif
+      fprintf(stderr, "START set up control system\n");
+#ifdef OOMPH_HAS_MPI
+    }
+#endif
+    control_set(control_strategy, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0,
+                Lx, Ly, nx_control, ny_control, Re, Ca, Theta);
+#ifdef OOMPH_HAS_MPI
+    if (this->communicator_pt()->my_rank() == 0) {
+#endif
+      fprintf(stderr, "END set up control system\n");
+#ifdef OOMPH_HAS_MPI
+    }
+#endif
   }
 
   // Loop over the desired number of timesteps
+  int start_step = this->step;
   ProgressBar pbar =
       ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>,
                   1.0, this->communicator_pt()->my_rank());
   pbar.start();
-  pbar.update(this->step);
+  pbar.update(this->step - start_step);
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
-    // NOTE h and q must be set to the current values
-    if (control_strategy > 0) {
-      // TODO: implement this
-      // /* compute the actuator strengths */
-      // control_step(dt, h, q);
-      //
-      // /* set basal velocity from actuator strengths */
-      // unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
-      // for (unsigned n = 0; n < n_node; n++) {
-      //   Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
-      //   node->set_value(1, control(node->x(0)));
-      // }
+    // NOTE h, qx, and qy must be set to the current values
+    if (control_strategy != UNCONTROLLED) {
+      /* compute the actuator strengths */
+      control_step(dt, h, qx);
+
+      /* set basal velocity from actuator strengths */
+      unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
+      for (unsigned n = 0; n < n_node; n++) {
+        Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+        node->set_value(1, control(node->x(0), node->x(1)));
+      }
     }
 
     /* take a timestep of size dt */
@@ -364,7 +377,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
-    pbar.update(this->step, this);
+    pbar.update(this->step - start_step, this);
 
     // output interface information if required
     if (step % out_step == 0) {
