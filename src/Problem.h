@@ -284,7 +284,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
     for (int j = 0; j < this->nx_control; j++) {
       double xj = (dx * (static_cast<double>(j) + 0.5)); // x coordinate
       int k = j + i * this->nx_control; // linear index into the arrays
-      fprintf(fp, "%lf %lf %lf %lf %lf\n", yi, xj, h[k], qx[k], qy[k]);
+      fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", yi, xj, h[k], qx[k], qy[k], f[k]);
     }
     fprintf(fp, "\n");
   }
