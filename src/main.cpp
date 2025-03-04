@@ -60,15 +60,6 @@ int main(int argc, char **argv) {
   CommandLineArgs::specify_command_line_flag("--no_mumps",
                                              "Don't use the MUMPS solver");
 
-#ifdef OOMPH_HAS_MPI
-  // only output if this is rank 0
-  if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
-    CommandLineArgs::doc_specified_flags();
-  }
-#else
-  CommandLineArgs::doc_specified_flags();
-#endif
-
   CommandLineArgs::parse_and_assign();
 
   if (CommandLineArgs::command_line_flag_has_been_set("--no_mumps")) {
