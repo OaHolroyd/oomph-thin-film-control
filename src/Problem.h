@@ -16,7 +16,7 @@
 #include "generic.h"
 
 // Project-specific includes
-#include "GlobalPhysicalVariables.h"
+#include "GlobalVariables.h"
 #include "control.h"
 #include "progress_bar.h"
 
@@ -79,7 +79,8 @@ public:
    * @param p_control the number of observers
    */
   ControlledFilmProblem(const int &nx_control, const int &ny_control,
-                        const int &m_control, const int &p_control = 0) {
+                        const int &m_control, const int &p_control = 0,
+                        const bool &use_mumps = true) {
     // Set up the output directory (always delete the old one)
     std::filesystem::path out_dir = std::filesystem::path("output");
     if (std::filesystem::exists(out_dir)) {
@@ -93,7 +94,14 @@ public:
 
 #ifdef OOMPH_HAS_MUMPS
     // Use mumps if available
-    this->linear_solver_pt() = new MumpsSolver;
+    if (use_mumps) {
+      this->linear_solver_pt() = new MumpsSolver;
+      fprintf(stderr, "Using MUMPS\n");
+    } else {
+      fprintf(stderr, "Using SuperLU\n");
+    }
+#else
+    fprintf(stderr, "Using SuperLU\n");
 #endif
 
     // don't print loads of internal solver details
@@ -153,14 +161,14 @@ public:
       // Add elements to the mesh
       Surface_mesh_pt->add_element_pt(surface_element_pt);
       // Assign the capillary number to the free surface
-      surface_element_pt->ca_pt() = &Global_Physical_Variables::Ca;
+      surface_element_pt->ca_pt() = &Global_Variables::Ca;
     }
   } // end of make_free_surface_elements
 
   /// Complete the build of the problem setting all standard
   /// parameters and boundary conditions
   void complete_build() {
-    using namespace Global_Physical_Variables;
+    using namespace Global_Variables;
 
     // Complete the build of the fluid elements by passing physical parameters
     // Find the number of bulk elements
@@ -218,7 +226,7 @@ template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
     int Kx, int Ky, double delta, double p) {
   // Load the namespace
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
   // start at t = 0
   time = 0.0;
@@ -250,7 +258,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::initial_condition(
 
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
@@ -287,7 +295,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
 
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_mesh() {
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
   // open the file
   std::ofstream file;
@@ -323,7 +331,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     const double &dt, const unsigned &nsteps, int out_step,
     control_t control_strategy) {
   // Need to use the Global variables here
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
   // output the initial condition
   set_hqf(control_strategy);

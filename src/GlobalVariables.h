@@ -13,7 +13,7 @@ using namespace std;
 using namespace oomph;
 
 //The global physical variables
-namespace Global_Physical_Variables {
+namespace Global_Variables {
 /// The length of the domain in the x direction (streamwise)
 double Lx = 32.0;
 
@@ -61,6 +61,9 @@ unsigned m_control = 32;
 
 /// The number of observers in the control system
 unsigned p_control = 32;
+
+/// Whether to use the MUMPS solver
+bool use_mumps = true;
 
 /// The Vector direction of gravity (x/y/z, ie streamwise, spanwise, normal)
 Vector<double> G = {2.0, 0.0, -2.0 / tan(Theta)}; // x is streamwise, y is spanwise, z is normal

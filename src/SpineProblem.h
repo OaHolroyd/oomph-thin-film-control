@@ -60,11 +60,11 @@ public:
   SpineControlledFilmProblem(const unsigned &nx, const unsigned &ny,
                              const unsigned &nz, const int &nx_control,
                              const int &ny_control, const int &m_control,
-                             const int &p_control)
+                             const int &p_control, const bool &use_mumps)
       : ControlledFilmProblem<ELEMENT,
                               SpineSurfaceFluidInterfaceElement<ELEMENT>>(
-            nx_control, ny_control, m_control, p_control) {
-    using namespace Global_Physical_Variables; // to access the length
+            nx_control, ny_control, m_control, p_control, use_mumps) {
+    using namespace Global_Variables; // to access the length
 
     // create our one and only timestepper, with adaptive timestepping
     this->add_time_stepper_pt(new TIMESTEPPER);
@@ -107,7 +107,7 @@ private:
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
     int use_control) {
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
   // grid spacings
   double dx = Lx / this->nx_control;

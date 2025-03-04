@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   MPI_Helpers::init(argc, argv);
 #endif
 
-  using namespace Global_Physical_Variables;
+  using namespace Global_Variables;
 
   // allow overwriting of the default values from the command line
   CommandLineArgs::setup(argc, argv);
@@ -57,6 +57,9 @@ int main(int argc, char **argv) {
   CommandLineArgs::specify_command_line_flag("--p_control", &p_control,
                                              "number of observers");
 
+  CommandLineArgs::specify_command_line_flag("--no_mumps",
+                                             "Don't use the MUMPS solver");
+
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
   if (MPI_Helpers::communicator_pt()->my_rank() != 0) {
@@ -67,6 +70,12 @@ int main(int argc, char **argv) {
 #endif
 
   CommandLineArgs::parse_and_assign();
+
+  if (CommandLineArgs::command_line_flag_has_been_set("--no_mumps")) {
+    use_mumps = false;
+  } else {
+    use_mumps = true;
+  }
 
 #ifdef OOMPH_HAS_MPI
   // only output if this is rank 0
@@ -90,6 +99,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "ny_control = %d\n", ny_control);
     fprintf(stderr, "m_control = %d\n", m_control);
     fprintf(stderr, "p_control = %d\n", p_control);
+    fprintf(stderr, "MUMPS: %d\n", use_mumps);
 
 #ifdef OOMPH_HAS_MPI
   }
@@ -97,7 +107,8 @@ int main(int argc, char **argv) {
 
   // Create the control problem
   SpineControlledFilmProblem<SpineElement<QTaylorHoodElement<3>>, BDF<2>>
-      problem(nx, ny, nz, nx_control, ny_control, m_control, p_control);
+      problem(nx, ny, nz, nx_control, ny_control, m_control, p_control,
+              use_mumps);
 
   // Initial condition
   problem.initial_condition(1, 1, 0.01, 0.8);
@@ -111,7 +122,8 @@ int main(int argc, char **argv) {
 
   // Step with controls turned on
   if (tcontrol > 0.0) {
-    problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1, PAIR);
+    problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1,
+                     PAIR);
   }
 
   // Finalise MPI
