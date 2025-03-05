@@ -179,7 +179,7 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
 
   /* observer locations */
   // TODO: decide on how to place the observers
-  Oloc = malloc(P * sizeof(double));
+  Oloc = malloc(2 * P * sizeof(double));
   int px = round(sqrt((double)P) * LX / sqrt(LX * LY));
   int py = P / px;
   if (px * py != P) {
@@ -200,7 +200,6 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
       }
     }
   }
-  return;
 
   /* control normaliser */
   NORM = 1.0;
