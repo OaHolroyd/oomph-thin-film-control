@@ -339,7 +339,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   this->out_step++;
 
   // if required, set up control variables
-  if (0 && control_strategy != UNCONTROLLED) {
+  if (control_strategy != UNCONTROLLED) {
 #ifdef OOMPH_HAS_MPI
     if (this->communicator_pt()->my_rank() == 0) {
 #endif
@@ -368,7 +368,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h, qx, and qy must be set to the current values
-    if (0 && control_strategy != UNCONTROLLED) {
+    if (control_strategy != UNCONTROLLED) {
       /* compute the actuator strengths */
       control_step(dt, h, qx);
 
@@ -377,31 +377,15 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       for (unsigned n = 0; n < n_node; n++) {
         Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
 
-        if (this->communicator_pt()->my_rank() == 0) {
-          fprintf(stderr, "NODE %d: %g, %g -> %g\n", n, node->x(0), node->x(1), control(node->x(0), node->x(1)));
-        }
-
         node->set_value(1, control(node->x(0), node->x(1)));
-      }
-      if (this->communicator_pt()->my_rank() == 0) {
-        fprintf(stderr, "SET CONTROL\n");
       }
     }
 
     /* take a timestep of size dt */
-    if (this->communicator_pt()->my_rank() == 0) {
-      fprintf(stderr, "STARTING SOLVE\n");
-    }
     unsteady_newton_solve(dt);
-    if (this->communicator_pt()->my_rank() == 0) {
-      fprintf(stderr, "DONE SOLVE\n");
-    }
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
-    if (this->communicator_pt()->my_rank() == 0) {
-      fprintf(stderr, "SET HQF\n");
-    }
     pbar.update(this->step - start_step, this);
 
     // output interface information if required

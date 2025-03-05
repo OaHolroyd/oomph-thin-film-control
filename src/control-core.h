@@ -182,7 +182,7 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   Oloc = malloc(P * sizeof(double));
   int px = round(sqrt((double)P) * LX / sqrt(LX * LY));
   int py = P / px;
-  if (mx * my != M) {
+  if (px * py != P) {
     fprintf(stderr, "ERROR: P must be divisable in proportion to Lx and Ly\n");
     exit(1);
   }
@@ -221,12 +221,12 @@ void internal_control_free(void) {
 
 /* outputs common arrays */
 void internal_control_output(void) {
-  output_d1d("out/Aloc.dat", Aloc, 2 * M);
-  output_d1d("out/Oloc.dat", Oloc, 2 * P);
+  output_d1d("output/Aloc.dat", Aloc, 2 * M);
+  output_d1d("output/Oloc.dat", Oloc, 2 * P);
 
   double **F = malloc_f2d(NX * NY, M);
   forcing_matrix(F);
-  output_d2d("out/F.dat", F, NX * NY, M);
+  output_d2d("output/F.dat", F, NX * NY, M);
 
   double **A, **B, **C;
 
@@ -243,9 +243,9 @@ void internal_control_output(void) {
   C = malloc_f2d(NX * NY, P);
   benney_observer(C);
 
-  output_d2d("out/A_be.dat", A, NX * NY, NX * NY);
-  output_d2d("out/B_be.dat", B, NX * NY, M);
-  output_d2d("out/C_be.dat", C, NX * NY, P);
+  output_d2d("output/A_be.dat", A, NX * NY, NX * NY);
+  output_d2d("output/B_be.dat", B, NX * NY, M);
+  output_d2d("output/C_be.dat", C, NX * NY, P);
 
   free_2d(A);
   free_2d(B);
@@ -264,9 +264,9 @@ void internal_control_output(void) {
   C = malloc_f2d(2 * NX * NY, P);
   wr_observer(C);
 
-  output_d2d("out/A_wr.dat", A, 2 * NX * NY, 2 * NX * NY);
-  output_d2d("out/B_wr.dat", B, 2 * NX * NY, M);
-  output_d2d("out/C_wr.dat", C, 2 * NX * NY, P);
+  output_d2d("output/A_wr.dat", A, 2 * NX * NY, 2 * NX * NY);
+  output_d2d("output/B_wr.dat", B, 2 * NX * NY, M);
+  output_d2d("output/C_wr.dat", C, 2 * NX * NY, P);
 
   free_2d(F);
   free_2d(A);
