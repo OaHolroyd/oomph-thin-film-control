@@ -86,8 +86,6 @@ void control_set(control_t ct, rom_t rt, int m, int p, double w, double alpha,
   internal_control_set(rt, m, p, w, alpha, mu, del, lx, ly, nx, ny, re, ca,
                        theta);
 
-  return;
-
   /* set strategy specific functions */
   CT = ct;
   switch (CT) {

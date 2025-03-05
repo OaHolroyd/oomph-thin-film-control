@@ -150,6 +150,8 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   CA = ca;
   THETA = theta;
 
+  return;
+
   M = m;
   P = p;
   W = w;
