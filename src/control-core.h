@@ -150,8 +150,6 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   CA = ca;
   THETA = theta;
 
-  return;
-
   M = m;
   P = p;
   W = w;
@@ -159,6 +157,8 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   MU = mu;
   DEL = del;
   RT = rt;
+
+  return;
 
   /* actuator locations/magnitudes */
   // TODO: decide on how to place the actuators
