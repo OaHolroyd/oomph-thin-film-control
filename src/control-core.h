@@ -152,15 +152,15 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
 
   CNTL_M = m;
   CTRL_P = p;
-  return;
+  // return;
   W = w;
-  return;
+  // return;
   ALPHA = alpha;
-  return;
+  // return;
   MU = mu;
-  return;
+  // return;
   DEL = del;
-  return;
+  // return;
   RT = rt;
   return;
 
