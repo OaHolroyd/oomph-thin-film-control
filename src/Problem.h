@@ -376,6 +376,11 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
       for (unsigned n = 0; n < n_node; n++) {
         Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+
+        if (this->communicator_pt()->my_rank() == 0) {
+          fprintf(stderr, "NODE %d: %g, %g\n", n, node->x(0), node->x(1));
+        }
+
         node->set_value(1, control(node->x(0), node->x(1)));
       }
     }
