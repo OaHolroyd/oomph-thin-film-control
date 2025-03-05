@@ -368,7 +368,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h, qx, and qy must be set to the current values
-    if (control_strategy != UNCONTROLLED) {
+    if (0 && control_strategy != UNCONTROLLED) {
       /* compute the actuator strengths */
       control_step(dt, h, qx);
 

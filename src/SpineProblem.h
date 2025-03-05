@@ -202,9 +202,6 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
       this->h[k] = h0 * (1 - x) * (1 - y) + h1 * x * (1 - y) +
                    h2 * (1 - x) * y + h3 * x * y;
 
-      if (this->communicator_pt()->my_rank() == 0) {
-        fprintf(stderr, "%d: %g, %g\n", k, xj, yi);
-      }
       this->f[k] = (use_control > 0) ? control(xj, yi) : 0.0;
 
       // TODO: qx, and qy
