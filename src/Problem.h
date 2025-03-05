@@ -383,13 +383,22 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
         node->set_value(1, control(node->x(0), node->x(1)));
       }
+      if (this->communicator_pt()->my_rank() == 0) {
+        fprintf(stderr, "SET CONTROL\n");
+      }
     }
 
     /* take a timestep of size dt */
     unsteady_newton_solve(dt);
+    if (this->communicator_pt()->my_rank() == 0) {
+      fprintf(stderr, "DONE SOLVE\n");
+    }
     this->time += dt;
     this->step++;
     set_hqf(control_strategy); // update the h, q, f arrays
+    if (this->communicator_pt()->my_rank() == 0) {
+      fprintf(stderr, "SET HQF\n");
+    }
     pbar.update(this->step - start_step, this);
 
     // output interface information if required
