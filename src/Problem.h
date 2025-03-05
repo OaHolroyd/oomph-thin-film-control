@@ -386,11 +386,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->time += dt;
     this->step++;
     set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
-    // set_hqf(0); // update the h, q, f arrays
     pbar.update(this->step - start_step, this);
-
-    fprintf(stderr, "%d: SUCCESS\n", this->communicator_pt()->my_rank());
-    exit(0);
 
     // output interface information if required
     if (step % out_step == 0) {

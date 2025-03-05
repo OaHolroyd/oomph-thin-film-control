@@ -80,8 +80,6 @@ double control_cost(double *h) {
 void control_set(control_t ct, rom_t rt, int m, int p, double w, double alpha,
                  double mu, double del, double lx, double ly, int nx, int ny,
                  double re, double ca, double theta) {
-  fprintf(stderr, "ENTERED control_set\n");
-
   /* control strategy independent setup */
   internal_control_set(rt, m, p, w, alpha, mu, del, lx, ly, nx, ny, re, ca,
                        theta);
