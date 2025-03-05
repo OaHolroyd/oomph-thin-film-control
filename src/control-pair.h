@@ -12,7 +12,7 @@ void pair_set(void) {
   fprintf(stderr, "using PAIR controls\n");
 
   /* pair requires M and P to be the same */
-  if (CNTL_M != CTRL_P) {
+  if (M != P) {
     ABORT("M and P must be equal for paired controls");
   }
 }
@@ -22,7 +22,7 @@ void pair_free(void) {}
 
 /* [REQUIRED] steps the system forward in time given the interfacial height */
 void pair_step(double dt, double *h, double *q) {
-  for (int i = 0; i < CNTL_M; i++) {
+  for (int i = 0; i < M; i++) {
     // Amag[i] = ALPHA * (interp(Oloc[2 * i], Oloc[2 * i + 1], h) - 1.0);
     Amag[i] = (i % 2) ? 1.0 : -1.0;
   } // i end
@@ -39,17 +39,17 @@ void pair_output(void) {
 /* [REQUIRED] generates the control matrix CM = a*F*Phi */
 void pair_matrix(double **CM) {
   /* forcing matrix */
-  double **F = malloc_f2d(NX * NY, CNTL_M);
+  double **F = malloc_f2d(NX * NY, M);
   forcing_matrix(F);
 
   /* observer matrix (actually the transpose) */
-  double **B = malloc_f2d(NX * NY, CTRL_P);
+  double **B = malloc_f2d(NX * NY, P);
   benney_observer(B);
 
   for (int i = 0; i < NX * NY; i++) {
     for (int j = 0; j < NX * NY; j++) {
       CM[i][j] = 0.0;
-      for (int k = 0; k < CNTL_M; k++) {
+      for (int k = 0; k < M; k++) {
         CM[i][j] += ALPHA * F[i][k] * B[j][k];
       } // k end
     } // j end

@@ -43,7 +43,7 @@ double (*estimator)(double x, double y);
 double control(double x, double y) {
   double vc = 0.0;
 
-  for (int i = 0; i < CNTL_M; i++) {
+  for (int i = 0; i < M; i++) {
     vc += Amag[i] * actuator(x - Aloc[2 * i], y - Aloc[2 * i + 1]);
   } // i end
 
