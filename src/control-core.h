@@ -39,8 +39,8 @@ static double CA;    // capillary number
 static double THETA; // plate angle
 
 /* control constants */
-static int M;        // number of actuators
-static int P;        // number of observers
+static int CNTL_M;        // number of actuators
+static int CTRL_P;        // number of observers
 static double W;     // width parameter
 static double ALPHA; // control strength parameter
 static double MU;    // control cost parameter
@@ -150,8 +150,8 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   CA = ca;
   THETA = theta;
 
-  M = m;
-  P = p;
+  CNTL_M = m;
+  CTRL_P = p;
   return;
   W = w;
   return;
@@ -166,11 +166,11 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
 
   /* actuator locations/magnitudes */
   // TODO: decide on how to place the actuators
-  Aloc = malloc(2 * M * sizeof(double));
-  Amag = malloc(M * sizeof(double));
-  int mx = round(sqrt((double)M) * LX / sqrt(LX * LY));
-  int my = M / mx;
-  if (mx * my != M) {
+  Aloc = malloc(2 * CNTL_M * sizeof(double));
+  Amag = malloc(CNTL_M * sizeof(double));
+  int mx = round(sqrt((double)CNTL_M) * LX / sqrt(LX * LY));
+  int my = CNTL_M / mx;
+  if (mx * my != CNTL_M) {
     fprintf(stderr, "ERROR: M must be divisable in proportion to Lx and Ly\n");
     exit(1);
   }
@@ -185,10 +185,10 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
 
   /* observer locations */
   // TODO: decide on how to place the observers
-  Oloc = malloc(P * sizeof(double));
-  int px = round(sqrt((double)P) * LX / sqrt(LX * LY));
-  int py = P / px;
-  if (px * py != P) {
+  Oloc = malloc(CTRL_P * sizeof(double));
+  int px = round(sqrt((double)CTRL_P) * LX / sqrt(LX * LY));
+  int py = CTRL_P / px;
+  if (px * py != CTRL_P) {
     fprintf(stderr, "ERROR: P must be divisable in proportion to Lx and Ly\n");
     exit(1);
   }
@@ -227,12 +227,12 @@ void internal_control_free(void) {
 
 /* outputs common arrays */
 void internal_control_output(void) {
-  output_d1d("output/Aloc.dat", Aloc, 2 * M);
-  output_d1d("output/Oloc.dat", Oloc, 2 * P);
+  output_d1d("output/Aloc.dat", Aloc, 2 * CNTL_M);
+  output_d1d("output/Oloc.dat", Oloc, 2 * CTRL_P);
 
-  double **F = malloc_f2d(NX * NY, M);
+  double **F = malloc_f2d(NX * NY, CNTL_M);
   forcing_matrix(F);
-  output_d2d("output/F.dat", F, NX * NY, M);
+  output_d2d("output/F.dat", F, NX * NY, CNTL_M);
 
   double **A, **B, **C;
 
@@ -242,16 +242,16 @@ void internal_control_output(void) {
   benney_jacobian(A);
 
   /* actuator matrix */
-  B = malloc_f2d(NX * NY, M);
+  B = malloc_f2d(NX * NY, CNTL_M);
   benney_actuator(B);
 
   /* observer matrix (actually the transpose) */
-  C = malloc_f2d(NX * NY, P);
+  C = malloc_f2d(NX * NY, CTRL_P);
   benney_observer(C);
 
   output_d2d("output/A_be.dat", A, NX * NY, NX * NY);
-  output_d2d("output/B_be.dat", B, NX * NY, M);
-  output_d2d("output/C_be.dat", C, NX * NY, P);
+  output_d2d("output/B_be.dat", B, NX * NY, CNTL_M);
+  output_d2d("output/C_be.dat", C, NX * NY, CTRL_P);
 
   free_2d(A);
   free_2d(B);
@@ -263,16 +263,16 @@ void internal_control_output(void) {
   wr_jacobian(A);
 
   /* actuator matrix */
-  B = malloc_f2d(2 * NX * NY, M);
+  B = malloc_f2d(2 * NX * NY, CNTL_M);
   wr_actuator(B);
 
   /* observer matrix (actually the transpose) */
-  C = malloc_f2d(2 * NX * NY, P);
+  C = malloc_f2d(2 * NX * NY, CTRL_P);
   wr_observer(C);
 
   output_d2d("output/A_wr.dat", A, 2 * NX * NY, 2 * NX * NY);
-  output_d2d("output/B_wr.dat", B, 2 * NX * NY, M);
-  output_d2d("output/C_wr.dat", C, 2 * NX * NY, P);
+  output_d2d("output/B_wr.dat", B, 2 * NX * NY, CNTL_M);
+  output_d2d("output/C_wr.dat", C, 2 * NX * NY, CTRL_P);
 
   free_2d(F);
   free_2d(A);
@@ -287,7 +287,7 @@ void internal_control_output(void) {
 void forcing_matrix(double **F) {
   for (int i = 0; i < NY; i++) {
     for (int j = 0; j < NX; j++) {
-      for (int k = 0; k < M; k++) {
+      for (int k = 0; k < CNTL_M; k++) {
         F[IJTOK(i, j)][k] =
             actuator(JTOX(j) - Aloc[2 * k], ITOY(i) - Aloc[2 * k + 1]);
       }
@@ -601,12 +601,12 @@ void wr_jacobian(double **A) {
 /* Actuator (2N-by-M) */
 void wr_actuator(double **B) {
   /* forcing matrix (TODO: see if rotating this makes it faster) */
-  double **F = malloc_f2d(NX * NY, M);
+  double **F = malloc_f2d(NX * NY, CNTL_M);
   forcing_matrix(F);
 
   /* actuator matrix */
   for (int i = 0; i < NX * NY; i++) {
-    for (int j = 0; j < M; j++) {
+    for (int j = 0; j < CNTL_M; j++) {
       B[i][j] = F[i][j];
       B[i + NX * NY][j] = (1.0 / 3.0) * F[i][j];
     } // j end

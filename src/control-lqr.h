@@ -23,11 +23,11 @@ void lqr_benney_compute_K(double **lqr_k) {
   benney_jacobian(A);
 
   /* actuator matrix */
-  double **B = malloc_f2d(NX * NY, M);
+  double **B = malloc_f2d(NX * NY, CNTL_M);
   benney_actuator(B);
 
   /* control matrix */
-  dlqr(A, B, DX * DY * MU, 1 - MU, NX * NY, M, lqr_k);
+  dlqr(A, B, DX * DY * MU, 1 - MU, NX * NY, CNTL_M, lqr_k);
 
   free_2d(A);
   free_2d(B);
@@ -40,11 +40,11 @@ void lqr_wr_compute_K(double **lqr_k) {
   wr_jacobian(A);
 
   /* actuator matrix */
-  double **B = malloc_f2d(2 * NX * NY, M);
+  double **B = malloc_f2d(2 * NX * NY, CNTL_M);
   wr_actuator(B);
 
   /* full control matrix */
-  dlqr(A, B, DX * DY * MU, 1 - MU, 2 * NX * NY, M, lqr_k);
+  dlqr(A, B, DX * DY * MU, 1 - MU, 2 * NX * NY, CNTL_M, lqr_k);
 
   free_2d(A);
   free_2d(B);
@@ -58,11 +58,11 @@ void lqr_set(void) {
   /* pick from the available ROMs */
   switch (RT) {
   case BENNEY:
-    LQR_K = malloc_f2d(M, NX * NY);
+    LQR_K = malloc_f2d(CNTL_M, NX * NY);
     lqr_benney_compute_K(LQR_K);
     break;
   case WR:
-    LQR_K = malloc_f2d(M, 2 * NX * NY);
+    LQR_K = malloc_f2d(CNTL_M, 2 * NX * NY);
     lqr_wr_compute_K(LQR_K);
     break;
   default:
@@ -76,7 +76,7 @@ void lqr_free(void) { free(LQR_K); }
 /* [REQUIRED] steps the system forward in time given the interfacial height */
 void lqr_step(double dt, double *h, double *q) {
   /* f = K * (h-1) */
-  for (int k = 0; k < M; k++) {
+  for (int k = 0; k < CNTL_M; k++) {
     Amag[k] = 0.0;
     for (int i = 0; i < NY; i++) {
       for (int j = 0; j < NX; j++) {
@@ -102,22 +102,22 @@ double lqr_estimator(double x, double y) { return 0.0; }
 /* [REQUIRED] outputs the internal matrices */
 void lqr_output(void) {
   if (RT == BENNEY) {
-    output_d2d("out/K.dat", LQR_K, M, NX * NY);
+    output_d2d("out/K.dat", LQR_K, CNTL_M, NX * NY);
   } else {
-    output_d2d("out/K.dat", LQR_K, M, 2 * NX * NY);
+    output_d2d("out/K.dat", LQR_K, CNTL_M, 2 * NX * NY);
   }
 }
 
 /* [REQUIRED] generates the control matrix CM = F*K */
 void lqr_matrix(double **CM) {
   /* forcing matrix */
-  double **F = malloc_f2d(NX * NY, M);
+  double **F = malloc_f2d(NX * NY, CNTL_M);
   forcing_matrix(F);
 
   for (int i = 0; i < NX * NY; i++) {
     for (int j = 0; j < 2 * NX * NY; j++) {
       CM[i][j] = 0.0;
-      for (int k = 0; k < M; k++) {
+      for (int k = 0; k < CNTL_M; k++) {
         CM[i][j] += F[i][k] * LQR_K[k][j];
       } // k end
     } // j end
