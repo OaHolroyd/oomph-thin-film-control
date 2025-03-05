@@ -339,7 +339,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   this->out_step++;
 
   // if required, set up control variables
-  if (control_strategy != UNCONTROLLED) {
+  if (0 && control_strategy != UNCONTROLLED) {
 #ifdef OOMPH_HAS_MPI
     if (this->communicator_pt()->my_rank() == 0) {
 #endif
