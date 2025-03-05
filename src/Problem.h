@@ -389,6 +389,9 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     }
 
     /* take a timestep of size dt */
+    if (this->communicator_pt()->my_rank() == 0) {
+      fprintf(stderr, "STARTING SOLVE\n");
+    }
     unsteady_newton_solve(dt);
     if (this->communicator_pt()->my_rank() == 0) {
       fprintf(stderr, "DONE SOLVE\n");
