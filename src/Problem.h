@@ -368,7 +368,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h, qx, and qy must be set to the current values
-    if (0 && control_strategy != UNCONTROLLED) {
+    if (control_strategy != UNCONTROLLED) {
       /* compute the actuator strengths */
       control_step(dt, h, qx);
 
@@ -385,8 +385,8 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     unsteady_newton_solve(dt);
     this->time += dt;
     this->step++;
-    // set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
-    set_hqf(0); // update the h, q, f arrays
+    set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
+    // set_hqf(0); // update the h, q, f arrays
     pbar.update(this->step - start_step, this);
 
     fprintf(stderr, "%d: SUCCESS\n", this->communicator_pt()->my_rank());
