@@ -114,10 +114,10 @@ public:
     this->m_control = m_control;
     this->p_control = p_control;
 
-    this->h = new double[nx_control * ny_control];
-    this->qx = new double[nx_control * ny_control];
-    this->qy = new double[nx_control * ny_control];
-    this->f = new double[nx_control * ny_control];
+    this->h = (double *)malloc(nx_control * ny_control * sizeof(double));
+    this->qx = (double *)malloc(nx_control * ny_control * sizeof(double));
+    this->qy = (double *)malloc(nx_control * ny_control * sizeof(double));
+    this->f = (double *)malloc(nx_control * ny_control * sizeof(double));
 
     // mesh details
   }
@@ -215,10 +215,10 @@ public:
     // Delete the time stepper
     delete this->time_stepper_pt();
 
-    delete[] this->h;
-    delete[] this->qx;
-    delete[] this->qy;
-    delete[] this->f;
+    free(this->h);
+    free(this->qx);
+    free(this->qy);
+    free(this->f);
   }
 };
 
