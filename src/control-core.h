@@ -139,6 +139,7 @@ double actuator(double x, double y) {
 void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
                           double mu, double del, double lx, double ly, int nx,
                           int ny, double re, double ca, double theta) {
+  fprintf(stderr, "ENTERED internal_control_set\n");
   /* set constants */
   NX = nx;
   NY = ny;
