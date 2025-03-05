@@ -385,7 +385,8 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     unsteady_newton_solve(dt);
     this->time += dt;
     this->step++;
-    set_hqf(control_strategy); // update the h, q, f arrays
+    // set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
+    set_hqf(0); // update the h, q, f arrays
     pbar.update(this->step - start_step, this);
 
     fprintf(stderr, "%d: SUCCESS\n", this->communicator_pt()->my_rank());
