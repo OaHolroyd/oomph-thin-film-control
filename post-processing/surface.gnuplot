@@ -5,7 +5,7 @@ set xrange [0:32];
 set size ratio -1
 set pm3d interpolate 0,0
 
-do for [i=0:13000] {
+do for [i=800:13000] {
   fin = sprintf("output/surface_%d.dat", i)
 
   stats fin nooutput
@@ -18,7 +18,8 @@ do for [i=0:13000] {
     fout = sprintf("output/plot_surface_%d.png",i)
     set output fout
     # plot fin u 2:1:3 w image notitle
-    splot fin u 2:1:($3 - 1) notitle with pm3d
+    # splot fin u 2:1:($3 - 1) notitle with pm3d
+    splot fin u 2:1:6 notitle with pm3d
   }
 }
 set output
@@ -38,7 +39,8 @@ do for [i=0:13000] {
     set title x
 
     # plot fin u 2:1:3 w image notitle
-    splot fin u 2:1:($3 - 1) notitle with pm3d
+    # splot fin u 2:1:($3 - 1) notitle with pm3d
+    splot fin u 2:1:6 notitle with pm3d
   }
 }
 set output

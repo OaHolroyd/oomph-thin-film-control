@@ -170,9 +170,12 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   }
   for (int i = 0; i < mx; i++) {
     for (int j = 0; j < my; j++) {
-      Aloc[2 * (i * my + j)] = (i + 0.5) * LX / mx;
-      Aloc[2 * (i * my + j) + 1] = (j + 0.5) * LY / my;
-      Amag[i * my + j] = 0.0;
+      int k = (i * my + j);
+      Aloc[2 * k] = (i + 0.5) * LX / mx;
+      Aloc[2 * k + 1] = (j + 0.5) * LY / my;
+      Amag[k] = 0.0;
+
+      fprintf(stderr, "[%d, (%d, %d)] %g %g\n", k, i, j, Aloc[2 * k], Aloc[2 * k + 1]);
     } // j end
   } // i end
 
