@@ -23,8 +23,7 @@ void pair_free(void) {}
 /* [REQUIRED] steps the system forward in time given the interfacial height */
 void pair_step(double dt, double *h, double *q) {
   for (int i = 0; i < M; i++) {
-    // Amag[i] = ALPHA * (interp(Oloc[2 * i], Oloc[2 * i + 1], h) - 1.0);
-    Amag[i] = (i % 2) ? 1.0 : -1.0;
+    Amag[i] = ALPHA * (interp(Oloc[2 * i], Oloc[2 * i + 1], h) - 1.0);
   } // i end
 }
 
