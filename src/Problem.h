@@ -96,6 +96,7 @@ public:
     // Use mumps if available
     if (use_mumps) {
       this->linear_solver_pt() = new MumpsSolver;
+      this->linear_solver_pt()->enable_suppress_mumps_info_during_solve();
       fprintf(stderr, "Using MUMPS\n");
     } else {
       fprintf(stderr, "Using SuperLU\n");

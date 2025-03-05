@@ -47,7 +47,7 @@ double control(double x, double y) {
     vc += Amag[i] * actuator(x - Aloc[2 * i], y - Aloc[2 * i + 1]);
   } // i end
 
-  return -ALPHA * vc;
+  return -vc;
 }
 
 /* computes the incremental cost from the current timestep from the interface */
