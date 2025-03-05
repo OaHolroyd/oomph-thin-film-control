@@ -162,7 +162,7 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   DEL = del;
   // return;
   RT = rt;
-  return;
+  // return;
 
   /* actuator locations/magnitudes */
   // TODO: decide on how to place the actuators
@@ -182,6 +182,8 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
       Amag[k] = 0.0;
     } // j end
   } // i end
+
+  return;
 
   /* observer locations */
   // TODO: decide on how to place the observers
