@@ -139,7 +139,6 @@ double actuator(double x, double y) {
 void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
                           double mu, double del, double lx, double ly, int nx,
                           int ny, double re, double ca, double theta) {
-  fprintf(stderr, "ENTERED internal_control_set\n");
   /* set constants */
   NX = nx;
   NY = ny;
@@ -175,8 +174,6 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
       Aloc[2 * k] = (i + 0.5) * LX / mx;
       Aloc[2 * k + 1] = (j + 0.5) * LY / my;
       Amag[k] = 0.0;
-
-      fprintf(stderr, "[%d, (%d, %d)] %g %g\n", k, i, j, Aloc[2 * k], Aloc[2 * k + 1]);
     } // j end
   } // i end
 
@@ -209,10 +206,10 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   double integral = 0.0;
   for (int i = 0; i < NY; i++) {
     for (int j = 0; j < NX; j++) {
-      integral += actuator(DX * j - LX / 2, DY * i - LY / 2);
+      integral += actuator(JTOX(j) - LX / 2, ITOY(i) - LY / 2);
     }
   } // i end
-  NORM = 1.0 / (DX * integral);
+  NORM = 1.0 / (DX * DY * integral);
 }
 
 /* frees the common memory */
