@@ -4,6 +4,7 @@ main
 *.dat
 *.png
 *.gif
+*.zip
 
 # Prerequisites
 *.d
