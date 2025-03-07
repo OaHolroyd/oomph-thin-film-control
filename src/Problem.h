@@ -379,7 +379,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       for (unsigned n = 0; n < n_node; n++) {
         Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
 
-        node->set_value(1, control(node->x(0), node->x(1)));
+        node->set_value(2, control(node->x(0), node->x(1)));
       }
     }
 
