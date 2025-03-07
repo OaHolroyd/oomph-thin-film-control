@@ -349,7 +349,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 #ifdef OOMPH_HAS_MPI
     }
 #endif
-    control_set(control_strategy, WR, m_control, p_control, 0.1, 2.0, 0.5, 0.0,
+    control_set(control_strategy, WR, m_control, p_control, 0.1, -2.0, 0.5, 0.0,
                 Lx, Ly, nx_control, ny_control, Re, Ca, Theta);
 #ifdef OOMPH_HAS_MPI
     if (this->communicator_pt()->my_rank() == 0) {
