@@ -44,7 +44,7 @@ do for [i=0:13000] {
 
     # plot fin u 2:1:3 w image notitle
 
-    splot fin u 2:1:($6 + 1 - 2 * MARGIN):($6 + 1.0) notitle with image, \
+    splot fin u 2:1:($6 + 1 - 1.5 * MARGIN):($6 + 1.0) notitle with image, \
           fin u 2:1:3:3 notitle with pm3d
     # splot fin u 2:1:($6 + 0.99):($6 + 1.0) notitle with image
     # splot fin u 2:1:3:6 notitle with pm3d
