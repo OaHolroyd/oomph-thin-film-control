@@ -341,6 +341,15 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     fprintf(stderr, "START set up control system\n");
     control_set(control_strategy, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0,
                 Lx, Ly, nx_control, ny_control, Re, Ca, Theta);
+
+#ifdef OOMPH_HAS_MPI
+    if (this->communicator_pt()->my_rank() == 0) {
+#endif
+      control_output();
+#ifdef OOMPH_HAS_MPI
+    }
+#endif
+
     fprintf(stderr, "END set up control system\n");
   }
 
@@ -373,7 +382,6 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
         // node->set_value(2, -dh);
 
         node->set_value(2, control(node->x(0), node->x(1)));
-
       }
     }
 

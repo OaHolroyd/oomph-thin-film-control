@@ -102,9 +102,9 @@ double lqr_estimator(double x, double y) { return 0.0; }
 /* [REQUIRED] outputs the internal matrices */
 void lqr_output(void) {
   if (RT == BENNEY) {
-    output_d2d("out/K.dat", LQR_K, M, NX * NY);
+    output_d2d("output/K.dat", LQR_K, M, NX * NY);
   } else {
-    output_d2d("out/K.dat", LQR_K, M, 2 * NX * NY);
+    output_d2d("output/K.dat", LQR_K, M, 2 * NX * NY);
   }
 }
 
