@@ -57,10 +57,10 @@ unsigned nx_control = 40;
 unsigned ny_control = 20;
 
 /// The number of actuators in the control system
-unsigned m_control = 200;
+unsigned m_control = 32;
 
 /// The number of observers in the control system
-unsigned p_control = 200;
+unsigned p_control = 32;
 
 /// Whether to use the MUMPS solver
 bool use_mumps = true;

@@ -25,7 +25,7 @@ set pm3d interpolate 0,0
 # }
 # set output
 
-MARGIN=0.1
+MARGIN=0.012
 
 set zrange [1 - 2 * MARGIN:1+MARGIN]
 set cbrange [1-MARGIN:1+MARGIN]
