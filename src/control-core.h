@@ -237,26 +237,26 @@ void internal_control_output(void) {
 
   double **A, **B, **C;
 
-  /* BENNEY */
-  /* Jacobian */
-  A = malloc_f2d(NX * NY, NX * NY);
-  benney_jacobian(A);
-
-  /* actuator matrix */
-  B = malloc_f2d(NX * NY, M);
-  benney_actuator(B);
-
-  /* observer matrix (actually the transpose) */
-  C = malloc_f2d(NX * NY, P);
-  benney_observer(C);
-
-  output_d2d("output/A_be.dat", A, NX * NY, NX * NY);
-  output_d2d("output/B_be.dat", B, NX * NY, M);
-  output_d2d("output/C_be.dat", C, NX * NY, P);
-
-  free_2d(A);
-  free_2d(B);
-  free_2d(C);
+  // /* BENNEY */
+  // /* Jacobian */
+  // A = malloc_f2d(NX * NY, NX * NY);
+  // benney_jacobian(A);
+  //
+  // /* actuator matrix */
+  // B = malloc_f2d(NX * NY, M);
+  // benney_actuator(B);
+  //
+  // /* observer matrix (actually the transpose) */
+  // C = malloc_f2d(NX * NY, P);
+  // benney_observer(C);
+  //
+  // output_d2d("output/A_be.dat", A, NX * NY, NX * NY);
+  // output_d2d("output/B_be.dat", B, NX * NY, M);
+  // output_d2d("output/C_be.dat", C, NX * NY, P);
+  //
+  // free_2d(A);
+  // free_2d(B);
+  // free_2d(C);
 
   /* WR */
   /* Jacobian */
