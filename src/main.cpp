@@ -108,13 +108,14 @@ int main(int argc, char **argv) {
 
   // Step up to the start of the controls
   if (tburn > 0.0) {
-    problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 1, UNCONTROLLED);
+    int nsteps = static_cast<int>(tburn / dtburn);
+    problem.timestep(dtburn, nsteps, 1, UNCONTROLLED);
   }
 
   // Step with controls turned on
   if (tcontrol > 0.0) {
-    problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 1,
-                     PAIR);
+    int nsteps = static_cast<int>(tcontrol / dtcontrol);
+    problem.timestep(dtcontrol, nsteps, 1, LQR);
   }
 
   // Finalise MPI
