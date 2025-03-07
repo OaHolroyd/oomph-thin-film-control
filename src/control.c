@@ -135,8 +135,10 @@ void control_free(void) {
 
 /* outputs the relevant control matrices */
 void control_output(void) {
+  fprintf(stderr, "OUTPUT START\n");
   internal_control_output();
   s_output();
+  fprintf(stderr, "OUTPUT END\n");
 }
 
 #ifdef __cplusplus
