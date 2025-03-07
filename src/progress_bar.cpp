@@ -232,9 +232,6 @@ void ProgressBar::update_bar() {
 
   int reps = static_cast<int>(this->width * this->progress);
 
-  // new line
-  fprintf(stderr, "\n");
-
   // percentage complete
   fprintf(stderr, "%3.0f%%", this->progress * 100.0);
 
