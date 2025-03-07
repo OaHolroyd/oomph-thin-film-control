@@ -131,8 +131,13 @@ double actuator(double x, double y) {
     y -= LY;
   }
 
-  return NORM * exp((cos(2 * M_PI * x / LX) - 1.0) *
-                    (cos(2 * M_PI * y / LY) - 1.0) / (W * W));
+  // rescale x and y to [0, 2pi]
+  x = 2 * M_PI * x / LX;
+  y = 2 * M_PI * y / LY;
+
+  // 2D control is the product of two 1D controls, one for x, one for y
+  //  control(x, y) = exp((cos(x) - 1) / (W * W)) * exp((cos(y) - 1) / (W * W))
+  return NORM * exp((cos(x) + cos(y) - 2.0) / (W * W));
 }
 
 /* sets the common control parameters and allocates common memory */

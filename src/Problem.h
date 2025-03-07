@@ -286,7 +286,8 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
     for (int j = 0; j < this->nx_control; j++) {
       double xj = (dx * (static_cast<double>(j) + 0.5)); // x coordinate
       int k = j + i * this->nx_control; // linear index into the arrays
-      fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", yi, xj, h[k], qx[k], qy[k], f[k]);
+      fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", yi, xj, h[k], qx[k], qy[k],
+              f[k]);
     }
     fprintf(fp, "\n");
   }
@@ -335,29 +336,12 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   // Need to use the Global variables here
   using namespace Global_Variables;
 
-  // output the initial condition
-  set_hqf(control_strategy);
-  this->output_surface();
-  this->out_step++;
-
   // if required, set up control variables
   if (control_strategy != UNCONTROLLED) {
-#ifdef OOMPH_HAS_MPI
-    if (this->communicator_pt()->my_rank() == 0) {
-#endif
-      fprintf(stderr, "START set up control system\n");
-#ifdef OOMPH_HAS_MPI
-    }
-#endif
-    control_set(control_strategy, WR, m_control, p_control, 0.1, -2.0, 0.5, 0.0,
+    fprintf(stderr, "START set up control system\n");
+    control_set(control_strategy, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0,
                 Lx, Ly, nx_control, ny_control, Re, Ca, Theta);
-#ifdef OOMPH_HAS_MPI
-    if (this->communicator_pt()->my_rank() == 0) {
-#endif
-      fprintf(stderr, "END set up control system\n");
-#ifdef OOMPH_HAS_MPI
-    }
-#endif
+    fprintf(stderr, "END set up control system\n");
   }
 
   // Loop over the desired number of timesteps
@@ -377,13 +361,24 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       /* set basal velocity from actuator strengths */
       unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
       for (unsigned n = 0; n < n_node; n++) {
-        SpineNode *node = dynamic_cast<SpineNode *>(this->Bulk_mesh_pt->boundary_node_pt(0, n));
-        double h = node->spine_pt()->height();
-        double dh = h - 1.0;
+        SpineNode *node = dynamic_cast<SpineNode *>(
+            this->Bulk_mesh_pt->boundary_node_pt(0, n));
 
-        // node->set_value(2, control(node->x(0), node->x(1)));
-        node->set_value(2, -dh);
+        // Controls proportional to the height, ignoring actuator strengths
+        // double h = node->spine_pt()->height();
+        // double dh = h - 1.0;
+        // node->set_value(2, -dh);
+
+        node->set_value(2, control(node->x(0), node->x(1)));
+
       }
+    }
+
+    // output interface information if required
+    if (step % out_step == 0) {
+      set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
+      this->output_surface();
+      this->out_step++;
     }
 
     /* take a timestep of size dt */
@@ -392,13 +387,12 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     this->step++;
     set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
     pbar.update(this->step - start_step, this);
-
-    // output interface information if required
-    if (step % out_step == 0) {
-      this->output_surface();
-      this->out_step++;
-    }
   }
+
+  // output the final condition
+  set_hqf(control_strategy);
+  this->output_surface();
+  this->out_step++;
 
   pbar.end(this);
 } // end of timestep
