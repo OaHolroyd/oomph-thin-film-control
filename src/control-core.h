@@ -120,6 +120,7 @@ double interp(double x, double y, double *h) {
 /* (periodic) actuator function (only valid on [-3Lx/2, 3Lx/2]) */
 double actuator(double x, double y) {
   /* account for periodicity */
+  // TODO: since cos is periodic this probably isn't necessary
   if (x < 0) {
     x += LX;
   } else if (x > LX) {
@@ -175,7 +176,7 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   }
   for (int i = 0; i < mx; i++) {
     for (int j = 0; j < my; j++) {
-      int k = (i * my + j);
+      int k = i * my + j;
       Aloc[2 * k] = (i + 0.5) * LX / mx;
       Aloc[2 * k + 1] = (j + 0.5) * LY / my;
       Amag[k] = 0.0;
@@ -193,15 +194,16 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   }
   for (int i = 0; i < px; i++) {
     for (int j = 0; j < py; j++) {
-      Oloc[2 * (i * py + j)] = (i + 0.5) * LX / px - DEL;
-      Oloc[2 * (i * py + j) + 1] = (j + 0.5) * LY / py;
+      int k = i * py + j;
+      Oloc[2 * k] = (i + 0.5) * LX / px - DEL;
+      Oloc[2 * k + 1] = (j + 0.5) * LY / py;
 
       /* wrap via periodicity */
       // TODO: this will break if |DEL| > LX
-      if (Oloc[2 * (i * py + j)] < 0) {
-        Oloc[2 * (i * py + j)] += LX;
-      } else if (Oloc[2 * (i * py + j)] > LX) {
-        Oloc[2 * (i * py + j)] -= LX;
+      if (Oloc[2 * k] < 0) {
+        Oloc[2 * k] += LX;
+      } else if (Oloc[2 * k] > LX) {
+        Oloc[2 * k] -= LX;
       }
     }
   }
@@ -211,7 +213,7 @@ void internal_control_set(rom_t rt, int m, int p, double w, double alpha,
   double integral = 0.0;
   for (int i = 0; i < NY; i++) {
     for (int j = 0; j < NX; j++) {
-      integral += actuator(JTOX(j) - LX / 2, ITOY(i) - LY / 2);
+      integral += actuator(JTOX(j), ITOY(i));
     }
   } // i end
   NORM = 1.0 / (DX * DY * integral);

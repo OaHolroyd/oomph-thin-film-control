@@ -344,13 +344,16 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     fprintf(stderr, "END set up control system\n");
   }
 
-  // Loop over the desired number of timesteps
+  // set up the progress bar
   int start_step = this->step;
   ProgressBar pbar =
       ProgressBar(nsteps, 50, &prog_bar_print_3d<ELEMENT, INTERFACE_ELEMENT>,
                   1.0, this->communicator_pt()->my_rank());
   pbar.start();
   pbar.update(this->step - start_step);
+
+  // Loop over the desired number of timesteps
+  set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
   for (unsigned t = 0; t < nsteps; t++) {
     /* Use the control scheme to get the basal forcing */
     // NOTE h, qx, and qy must be set to the current values
