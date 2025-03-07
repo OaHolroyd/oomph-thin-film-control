@@ -377,9 +377,12 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
       /* set basal velocity from actuator strengths */
       unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
       for (unsigned n = 0; n < n_node; n++) {
-        Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+        SpineNode *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+        double h = node->spine_pt()->height();
+        double dh = h - 1.0;
 
-        node->set_value(2, control(node->x(0), node->x(1)));
+        // node->set_value(2, control(node->x(0), node->x(1)));
+        node->set_value(2, -dh);
       }
     }
 
