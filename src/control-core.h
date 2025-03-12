@@ -234,6 +234,7 @@ void internal_control_output(void) {
   double **F = malloc_f2d(NX * NY, M);
   forcing_matrix(F);
   output_d2d("output/F.dat", F, NX * NY, M);
+  free_2d(F);
 
   double **A, **B, **C;
 
@@ -262,23 +263,20 @@ void internal_control_output(void) {
   /* Jacobian */
   A = malloc_f2d(2 * NX * NY, 2 * NX * NY);
   wr_jacobian(A);
+  output_d2d("output/A_wr.dat", A, 2 * NX * NY, 2 * NX * NY);
+  free_2d(A);
 
   /* actuator matrix */
   B = malloc_f2d(2 * NX * NY, M);
   wr_actuator(B);
+  output_d2d("output/B_wr.dat", B, 2 * NX * NY, M);
+  free_2d(B);
 
   /* observer matrix (actually the transpose) */
-  C = malloc_f2d(2 * NX * NY, P);
-  wr_observer(C);
-
-  output_d2d("output/A_wr.dat", A, 2 * NX * NY, 2 * NX * NY);
-  output_d2d("output/B_wr.dat", B, 2 * NX * NY, M);
-  output_d2d("output/C_wr.dat", C, 2 * NX * NY, P);
-
-  free_2d(F);
-  free_2d(A);
-  free_2d(B);
-  free_2d(C);
+  // C = malloc_f2d(2 * NX * NY, P);
+  // wr_observer(C);
+  // output_d2d("output/C_wr.dat", C, 2 * NX * NY, P);
+  // free_2d(C);
 }
 
 /* ======================= */
