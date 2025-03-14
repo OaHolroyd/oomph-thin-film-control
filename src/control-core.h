@@ -480,8 +480,8 @@ void wr_jacobian(double **A) {
   c42 = 0.0;
 
   // -Dx
-  c21 += -0.5 / DX;
-  c23 += 0.5 / DX;
+  c21 += 0.5 / DX;
+  c23 += -0.5 / DX;
 
   for (int i = 0; i < NY; i++) {
     for (int j = 0; j < NX; j++) {

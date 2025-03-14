@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   // Step with controls turned on
   if (tcontrol > 0.0) {
     int nsteps = static_cast<int>(tcontrol / dtcontrol);
-    problem.timestep(dtcontrol, nsteps, 1, PAIR);
+    problem.timestep(dtcontrol, nsteps, 1, LQR);
   }
 
   // Finalise MPI
