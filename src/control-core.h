@@ -109,9 +109,16 @@ double interp(double x, double y, double *h) {
   int j0 = (int)_j0;
   int j1 = (int)_j1;
 
-  /* bilinear interpolation */
   double di = i - _i0;
   double dj = j - _j0;
+
+  /* account for periodicity in the indices */
+  i0 = (i0 + NY) % NY;
+  i1 = (i1 + NY) % NY;
+  j0 = (j0 + NX) % NX;
+  j1 = (j1 + NX) % NX;
+
+  /* bilinear interpolation */
   return h[IJTOK(i0, j0)] * (1 - di) * (1 - dj) +
          h[IJTOK(i0, j1)] * (1 - di) * dj + h[IJTOK(i1, j0)] * di * (1 - dj) +
          h[IJTOK(i1, j1)] * di * dj;
