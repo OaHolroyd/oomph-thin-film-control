@@ -1,10 +1,10 @@
 set term pngcairo size 600,600
-set yrange [0:16];
+set yrange [0:2];
 set xrange [0:32];
 set size ratio -1
 set pm3d interpolate 0,0
 
-MARGIN=0.012
+MARGIN=0.7
 set zrange [1 - 2 * MARGIN:1+MARGIN]
 set cbrange [1-MARGIN:1+MARGIN]
 
