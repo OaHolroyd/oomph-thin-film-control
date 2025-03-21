@@ -145,8 +145,8 @@ double actuator(double x, double y) {
 
   // 2D control is the product of two 1D controls, one for x, one for y
   //  control(x, y) = exp((cos(x) - 1) / (W * W)) * exp((cos(y) - 1) / (W * W))
-  // return NORM * exp((cos(x) + cos(y) - 2.0) / (W * W));
-  return NORM * exp((cos(x) - 1.0) / (W * W));
+  return NORM * exp((cos(x) + cos(y) - 2.0) / (W * W));
+  // return NORM * exp((cos(x) - 1.0) / (W * W));
 }
 
 /* sets the common control parameters and allocates common memory */

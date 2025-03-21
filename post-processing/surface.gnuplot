@@ -9,7 +9,7 @@ set zrange [1 - 2 * MARGIN:1+MARGIN]
 set cbrange [1-MARGIN:1+MARGIN]
 
 # plot individual frames
-do for [i=1500:2999] {
+do for [i=0:2999] {
   fin = sprintf("output/surface_%d.dat", i)
 
   stats fin nooutput
@@ -32,7 +32,7 @@ set output
 # plot animation
 set term gif size 500,400 animate delay 5 loop 0 optimize
 set output "output/plot_surface.gif"
-do for [i=1500:2999] {
+do for [i=0:2999] {
   fin = sprintf("output/surface_%d.dat", i)
 
   stats fin nooutput
