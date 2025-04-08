@@ -607,7 +607,7 @@ void wr_jacobian(double **A) {
 
 /* Actuator (2N-by-M) */
 void wr_actuator(double **B) {
-  /* forcing matrix (TODO: see if rotating this makes it faster) */
+  /* forcing matrix */
   double **F = malloc_f2d(NX * NY, M);
   forcing_matrix(F);
 
