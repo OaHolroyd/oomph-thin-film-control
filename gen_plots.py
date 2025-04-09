@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    nx = 64
-    ny = 8
+    nx = 40
+    ny = 40
     n = nx * ny
 
     x = np.arange(nx) + 0.5
@@ -67,6 +67,45 @@ def main():
     ax.plot([-0.5, 2*n-0.5], [n-0.5, n-0.5])
     ax.plot([n-0.5, n-0.5], [-0.5, 2*n-0.5])
     fig.savefig("output/A.png")
+    plt.close(fig)
+
+    # get the data at a given timestep
+    i = 0
+    t = None
+    file = f"output/surface_{i}.dat"
+    h = np.zeros((n,))
+    f = np.zeros((n,))
+    j = 0
+    with open(file, "r") as fp:
+        while line := fp.readline():
+            line = line.strip()
+
+            # empty line
+            if len(line) < 1:
+                continue
+
+            # header comment
+            if line[0] == "#":
+                t = float(line.split(' ')[2])
+            else:
+                data = [float(x) for x in line.split(' ')]
+                h[j] = data[2]
+                f[j] = data[5]
+                j += 1
+
+    # work out f using K
+    u = K @ np.concatenate([(h - 1), 2.0 / 3.0 * (h - 1)])
+    ff = F @ u
+
+    h = h.reshape(ny, nx)
+    f = f.reshape(ny, nx)
+    ff = ff.reshape(ny, nx)
+
+    fig, ax = plt.subplots(1, 3, figsize=(15, 7), subplot_kw={"projection": "3d"})
+    ax[0].plot_surface(x, y, h)
+    ax[1].plot_surface(x, y, f)
+    ax[2].plot_surface(x, y, ff)
+    fig.savefig(f"output/plot-{i}.png")
     plt.close(fig)
 
 

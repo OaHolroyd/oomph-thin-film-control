@@ -76,24 +76,39 @@ void lqr_free(void) { free(LQR_K); }
 /* [REQUIRED] steps the system forward in time given the interfacial height */
 void lqr_step(double dt, double *h, double *q) {
   /* f = K * (h-1) */
+  int N = NX * NY;
   for (int k = 0; k < M; k++) {
     Amag[k] = 0.0;
-    for (int i = 0; i < NY; i++) {
-      for (int j = 0; j < NX; j++) {
-        Amag[k] += LQR_K[k][IJTOK(i, j)] * (interp(JTOX(j), ITOY(i), h) - 1.0);
-      } // j end
-    } // i end
+    for (int i = 0; i < N; i++) {
+      Amag[k] += LQR_K[k][i] * (h[i] - 1.0);
+    }
 
-    /* only WR uses the flux */
     if (RT == WR) {
-      for (int i = 0; i < NY; i++) {
-        for (int j = 0; j < NX; j++) {
-          Amag[k] += LQR_K[k][NX * NY + IJTOK(i, j)] *
-                     (interp(JTOX(j), ITOY(i), q) - 2.0 / 3.0);
-        } // j end
-      } // i end
+      for (int i = 0; i < N; i++) {
+        Amag[k] += LQR_K[k][N+i] * (q[i] - 2.0/3.0);
+      }
     }
   }
+
+  // for (int k = 0; k < M; k++) {
+  //   Amag[k] = 0.0;
+  //   for (int i = 0; i < NY; i++) {
+  //     for (int j = 0; j < NX; j++) {
+  //       Amag[k] += LQR_K[k][IJTOK(i, j)] * (interp(JTOX(j), ITOY(i), h) - 1.0);
+  //     } // j end
+  //   } // i end
+  //
+  //   /* only WR uses the flux */
+  //   if (RT == WR) {
+  //     for (int i = 0; i < NY; i++) {
+  //       for (int j = 0; j < NX; j++) {
+  //         Amag[k] += LQR_K[k][NX * NY + IJTOK(i, j)] * (interp(JTOX(j), ITOY(i), q) - 2.0 / 3.0);
+  //       } // j end
+  //     } // i end
+  //   }
+  // }
+
+
 }
 
 /* [REQUIRED] returns the estimator as a function of x */

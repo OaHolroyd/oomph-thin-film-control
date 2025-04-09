@@ -207,7 +207,7 @@ void SpineControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(
 
 
       // TODO: qx, and qy
-      this->qx[k] = 0.0;
+      this->qx[k] = 2.0 / 3.0 * this->h[k];
       this->qy[k] = 0.0;
     }
   }
