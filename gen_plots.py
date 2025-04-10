@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -70,7 +71,10 @@ def main():
     plt.close(fig)
 
     # get the data at a given timestep
-    for i in range(1001):
+    tmax = []
+    hmax = []
+    i = 0
+    while Path(f"output/surface_{i}.dat").exists():
         t = None
         file = f"output/surface_{i}.dat"
         h = np.zeros((n,))
@@ -96,12 +100,22 @@ def main():
         h = h.reshape(ny, nx)
         f = f.reshape(ny, nx)
 
-        fig, ax = plt.subplots(1, 2, figsize=(12, 7), subplot_kw={"projection": "3d"})
-        ax[0].plot_surface(x, y, h)
-        ax[1].plot_surface(x, y, f)
-        fig.suptitle(f"t = {t}")
-        fig.savefig(f"output/plot-{i}.png")
-        plt.close(fig)
+        tmax.append(t)
+        hmax.append(np.max(np.abs(h-1)))
+        i += 1
+        print(i)
+
+        # fig, ax = plt.subplots(1, 2, figsize=(12, 7), subplot_kw={"projection": "3d"})
+        # ax[0].plot_surface(x, y, h)
+        # ax[1].plot_surface(x, y, f)
+        # fig.suptitle(f"t = {t}")
+        # fig.savefig(f"output/plot-{i}.png")
+        # plt.close(fig)
+
+    fig, ax = plt.subplots()
+    ax.semilogy(tmax, hmax)
+    fig.savefig("output/hmax.png")
+    plt.close(fig)
 
 
     # try:
