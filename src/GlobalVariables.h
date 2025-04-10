@@ -18,7 +18,7 @@ namespace Global_Variables {
 double Lx = 32.0;
 
 /// The length of the domain in the y direction (spanwise)
-double Ly = 16.0;
+double Ly = 32.0;
 
 /// Reynolds number, based on the surface velocity of a flat film (Nusselt velocity)
 double Re = 15.0;
@@ -45,7 +45,7 @@ double dtcontrol = 0.1;
 unsigned nx = 40;
 
 /// The number of elements in the y direction
-unsigned ny = 20;
+unsigned ny = 40;
 
 /// The number of elements in the z direction
 unsigned nz = 3;
@@ -54,10 +54,10 @@ unsigned nz = 3;
 unsigned nx_control = 40;
 
 /// The number of points in th control system in the y direction
-unsigned ny_control = 20;
+unsigned ny_control = 40;
 
 /// The number of actuators in the control system
-unsigned m_control = 32;
+unsigned m_control = 64;
 
 /// The number of observers in the control system
 unsigned p_control = m_control;
