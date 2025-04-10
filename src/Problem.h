@@ -143,9 +143,10 @@ public:
    * @param nsteps the number of timesteps to take
    * @param out_step the number of timesteps between outputs
    * @param control_strategy the control strategy to use (0 for none)
+   * @param cstart the start time of the control
    */
   void timestep(const double &dt, const unsigned &nsteps, int out_step = 1,
-                control_t control_strategy = UNCONTROLLED);
+                control_t control_strategy = UNCONTROLLED, double cstart = 0.0);
 
   // Make the free surface elements on the top surface
   void make_free_surface_elements() {
@@ -332,7 +333,7 @@ void prog_bar_print_3d(void *problem) {
 template <class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     const double &dt, const unsigned &nsteps, int out_step,
-    control_t control_strategy) {
+    control_t control_strategy, double cstart) {
   // Need to use the Global variables here
   using namespace Global_Variables;
 
@@ -364,9 +365,11 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
   // Loop over the desired number of timesteps
   set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
   for (unsigned t = 0; t < nsteps; t++) {
+    int use_control = (control_strategy != UNCONTROLLED) && (this->time > cstart);
+
     /* Use the control scheme to get the basal forcing */
     // NOTE h, qx, and qy must be set to the current values
-    if (control_strategy != UNCONTROLLED) {
+    if (use_control) {
       /* compute the actuator strengths */
       control_step(dt, h, qx);
 
@@ -387,7 +390,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
 
     // output interface information if required
     if (step % out_step == 0) {
-      set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
+      set_hqf(use_control); // update the h, q, f arrays
       this->output_surface();
       this->out_step++;
     }
@@ -396,7 +399,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
     unsteady_newton_solve(dt);
     this->time += dt;
     this->step++;
-    set_hqf(control_strategy != UNCONTROLLED); // update the h, q, f arrays
+    set_hqf(use_control); // update the h, q, f arrays
     pbar.update(this->step - start_step, this);
   }
 

@@ -101,22 +101,18 @@ int main(int argc, char **argv) {
       problem(nx, ny, nz, nx_control, ny_control, m_control, p_control,
               use_mumps);
 
+  // we now require the two time steps to be the same
+  // TODO: remove te option to set them independently
+  assert(dtburn == dtcontrol);
+
   // Initial condition
   problem.initial_condition(1, 1, 0.01, 0.8);
   problem.assign_initial_values_impulsive(
       dtburn); // TODO: mucks up the initial condition
 
-  // Step up to the start of the controls
-  if (tburn > 0.0) {
-    int nsteps = static_cast<int>(tburn / dtburn);
-    problem.timestep(dtburn, nsteps, 1, UNCONTROLLED);
-  }
-
-  // Step with controls turned on
-  if (tcontrol > 0.0) {
-    int nsteps = static_cast<int>(tcontrol / dtcontrol);
-    problem.timestep(dtcontrol, nsteps, 1, LQR);
-  }
+  double ttotal = tburn + tcontrol;
+  int nsteps = static_cast<int>(ttotal / dtcontrol);
+  problem.timestep(dtcontrol, nsteps, 1, LQR, tburn);
 
   // Finalise MPI
 #ifdef OOMPH_HAS_MPI

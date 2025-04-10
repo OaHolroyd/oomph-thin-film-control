@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
     nx = 40
-    ny = 40
+    ny = 20
     n = nx * ny
 
     x = np.arange(nx) + 0.5
@@ -78,6 +78,7 @@ def main():
         t = None
         file = f"output/surface_{i}.dat"
         h = np.zeros((n,))
+        q = np.zeros((n,))
         f = np.zeros((n,))
         j = 0
         with open(file, "r") as fp:
@@ -94,23 +95,31 @@ def main():
                 else:
                     data = [float(x) for x in line.split(' ')]
                     h[j] = data[2]
+                    q[j] = data[3]
                     f[j] = data[5]
                     j += 1
 
+        ff = -F @ (K @ np.concatenate([h - 1.0, q - 2.0/3.0]))
+
         h = h.reshape(ny, nx)
+        q = q.reshape(ny, nx)
         f = f.reshape(ny, nx)
+        ff = ff.reshape(ny, nx)
 
         tmax.append(t)
         hmax.append(np.max(np.abs(h-1)))
+
+        if i == 2001:
+            fig, ax = plt.subplots(1, 3, figsize=(12, 7), subplot_kw={"projection": "3d"})
+            ax[0].plot_surface(x, y, h)
+            ax[1].plot_surface(x, y, f)
+            ax[2].plot_surface(x, y, ff)
+            fig.suptitle(f"t = {t}")
+            fig.savefig(f"output/plot-{i}.png")
+            plt.close(fig)
+
         i += 1
         print(i)
-
-        # fig, ax = plt.subplots(1, 2, figsize=(12, 7), subplot_kw={"projection": "3d"})
-        # ax[0].plot_surface(x, y, h)
-        # ax[1].plot_surface(x, y, f)
-        # fig.suptitle(f"t = {t}")
-        # fig.savefig(f"output/plot-{i}.png")
-        # plt.close(fig)
 
     fig, ax = plt.subplots()
     ax.semilogy(tmax, hmax)
