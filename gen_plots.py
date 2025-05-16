@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
     nx = 40
-    ny = 20
+    ny = 40
     n = nx * ny
 
     x = np.arange(nx) + 0.5
@@ -74,6 +74,10 @@ def main():
     tmax = []
     hmax = []
     i = 0
+
+    def should_plot(ii):
+        return True
+
     while Path(f"output/surface_{i}.dat").exists():
         t = None
         file = f"output/surface_{i}.dat"
@@ -99,24 +103,24 @@ def main():
                     f[j] = data[5]
                     j += 1
 
-        ff = -F @ (K @ np.concatenate([h - 1.0, q - 2.0/3.0]))
+        # ff = -F @ (K @ np.concatenate([h - 1.0, q - 2.0/3.0]))
 
-        h = h.reshape(ny, nx)
-        q = q.reshape(ny, nx)
-        f = f.reshape(ny, nx)
-        ff = ff.reshape(ny, nx)
+        # h = h.reshape(ny, nx)
+        # q = q.reshape(ny, nx)
+        # f = f.reshape(ny, nx)
+        # ff = ff.reshape(ny, nx)
 
         tmax.append(t)
         hmax.append(np.max(np.abs(h-1)))
 
-        if i == 2001:
-            fig, ax = plt.subplots(1, 3, figsize=(12, 7), subplot_kw={"projection": "3d"})
-            ax[0].plot_surface(x, y, h)
-            ax[1].plot_surface(x, y, f)
-            ax[2].plot_surface(x, y, ff)
-            fig.suptitle(f"t = {t}")
-            fig.savefig(f"output/plot-{i}.png")
-            plt.close(fig)
+        # if should_plot(i):
+        #     fig, ax = plt.subplots(1, 3, figsize=(12, 7), subplot_kw={"projection": "3d"})
+        #     ax[0].plot_surface(x, y, h)
+        #     ax[1].plot_surface(x, y, f)
+        #     ax[2].plot_surface(x, y, ff)
+        #     fig.suptitle(f"t = {t}")
+        #     fig.savefig(f"output/plot-{i}.png")
+        #     plt.close(fig)
 
         i += 1
         print(i)
