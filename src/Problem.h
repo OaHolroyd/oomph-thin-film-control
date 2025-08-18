@@ -55,6 +55,9 @@ public:
   /// Storage of the interface/flux/forcing at regular intervals
   double *h, *q, *f;
 
+  /// Storage of the estimator interface/flux/forcing at regular intervals
+  double *z, *w, *gz, *gw;
+
   /// Information for the control system
   int n_control; // dimension of the control system
   int m_control; // number of actuators
@@ -97,6 +100,10 @@ public:
     this->h = new double[n_control];
     this->q = new double[n_control];
     this->f = new double[n_control];
+    this->z = new double[n_control];
+    this->w = new double[n_control];
+    this->gz = new double[n_control];
+    this->gw = new double[n_control];
 
     // mesh details
   }
@@ -118,7 +125,7 @@ public:
    * @param control_strategy the control strategy to use (0 for none)
    */
   void timestep(
-    const double &dt, const unsigned &nsteps, int out_step = 1, int control_strategy = 0
+    const double &dt, const unsigned &nsteps, int out_step = 1, int control_strategy = 0, double c_start = 0.0
   );
 
   //Make the free surface elements on the top surface
@@ -193,6 +200,10 @@ public:
     delete[] this->h;
     delete[] this->q;
     delete[] this->f;
+    delete[] this->z;
+    delete[] this->w;
+    delete[] this->gz;
+    delete[] this->gw;
   }
 };
 
@@ -277,6 +288,12 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::set_hqf(int use_control)
 
     // use control to set f
     f[i] = (use_control > 0) ? control(xi) : 0.0;
+
+    // estimator info
+    z[i] = estimator(xi);
+    w[i] = estimator_flux(xi);
+    gz[i] = 0.0;
+    gw[i] = 0.0;
   }
 }
 
@@ -298,7 +315,7 @@ void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::output_surface() {
   for (unsigned i = 0; i < n_control; i++) {
     double DX = Lx / n_control;
     double xi = (DX * (static_cast<double>(i) + 0.5));
-    file << xi << " " << h[i] << " " << q[i] << " " << f[i] << std::endl;
+    file << xi << " " << h[i] << " " << q[i] << " " << f[i] << " " << z[i] << " " << w[i] << std::endl;
   }
 
   // close the file
@@ -343,38 +360,38 @@ void prog_bar_print(void *problem) {
 
 template<class ELEMENT, class INTERFACE_ELEMENT>
 void ControlledFilmProblem<ELEMENT, INTERFACE_ELEMENT>::timestep(
-  const double &dt, const unsigned &nsteps, int out_step, int control_strategy
+  const double &dt, const unsigned &nsteps, int out_step, int control_strategy, double c_start
 ) {
   // Need to use the Global variables here
   using namespace Global_Physical_Variables;
+
+  // if required, set up control variables
+  if (control_strategy > 0) {
+    control_set((control_t)control_strategy, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx, n_control, Re, Ca, Theta);
+  }
 
   // output the initial condition
   set_hqf(control_strategy);
   this->output_surface();
   this->out_step++;
 
-  // if required, set up control variables
-  if (control_strategy > 0) {
-    control_set(LQR, WR, m_control, p_control, 0.1, 1.0, 0.5, 0.0, Lx, n_control, Re, Ca, Theta);
-  }
-
   //Loop over the desired number of timesteps
   ProgressBar pbar = ProgressBar(nsteps, 50, &prog_bar_print<ELEMENT, INTERFACE_ELEMENT>);
   pbar.start();
   pbar.update(this->step);
   for (unsigned t = 0; t < nsteps; t++) {
+    int control_on = (dt * t > c_start) ? 1 : 0;
+
     /* Use the control scheme to get the basal forcing */
     // NOTE h and q must be set to the current values
-    if (control_strategy > 0) {
-      /* compute the actuator strengths */
-      control_step(dt, h, q);
+    /* compute the actuator strengths */
+    control_step(dt, h, q, control_on);
 
-      /* set basal velocity from actuator strengths */
-      unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
-      for (unsigned n = 0; n < n_node; n++) {
-        Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
-        node->set_value(1, control(node->x(0)));
-      }
+    /* set basal velocity from actuator strengths */
+    unsigned n_node = this->Bulk_mesh_pt->nboundary_node(0);
+    for (unsigned n = 0; n < n_node; n++) {
+      Node *node = this->Bulk_mesh_pt->boundary_node_pt(0, n);
+      node->set_value(1, control(node->x(0)));
     }
 
     /* take a timestep of size dt */

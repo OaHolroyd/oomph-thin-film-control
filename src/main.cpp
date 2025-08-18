@@ -31,12 +31,10 @@ int main(int argc, char **argv) {
                                              "incline angle");
 
   CommandLineArgs::specify_command_line_flag("--tburn", &tburn, "burn in time");
-  CommandLineArgs::specify_command_line_flag("--dtburn", &dtburn,
-                                             "time step during burn");
-  CommandLineArgs::specify_command_line_flag("--tcontrol", &tcontrol,
-                                             "control time");
-  CommandLineArgs::specify_command_line_flag("--dtcontrol", &dtcontrol,
-                                             "time step during control");
+  CommandLineArgs::specify_command_line_flag("--tend", &tend,
+                                             "final time");
+  CommandLineArgs::specify_command_line_flag("--dt", &dt,
+                                             "time step");
 
   CommandLineArgs::specify_command_line_flag("--nx", &nx,
                                              "streamwise discretisation");
@@ -54,9 +52,9 @@ int main(int argc, char **argv) {
   fprintf(stderr, "Ca = %g\n", Ca);
   fprintf(stderr, "Theta = %g\n", Theta);
   fprintf(stderr, "tburn = %g\n", tburn);
-  fprintf(stderr, "dtburn = %g\n", dtburn);
-  fprintf(stderr, "tcontrol = %g\n", tcontrol);
-  fprintf(stderr, "dtcontrol = %g\n", dtcontrol);
+  fprintf(stderr, "dt = %g\n", dt);
+  fprintf(stderr, "tend = %g\n", tend);
+  fprintf(stderr, "dt = %g\n", dt);
   fprintf(stderr, "nx = %d\n", nx);
   fprintf(stderr, "ny = %d\n", ny);
   fprintf(stderr, "nx_control = %d\n", nx_control);
@@ -68,10 +66,9 @@ int main(int argc, char **argv) {
       problem(nx, ny, nx_control, m_control, p_control);
 
   // Step up to the start of the controls
+  // { PAIR = 1, LQR = 2, STATIC = 3, DYNAMIC = 4, ESTIMATOR = 5 }
+  int strat = 5;
   problem.initial_condition(1, 0.01);
-  problem.assign_initial_values_impulsive(dtburn);
-  problem.timestep(dtburn, static_cast<int>(tburn / dtburn), 10, 0);
-
-  // Step with controls turned on
-  problem.timestep(dtcontrol, static_cast<int>(tcontrol / dtcontrol), 10, 1);
+  problem.assign_initial_values_impulsive(dt);
+  problem.timestep(dt, static_cast<int>(tend / dt), 10, strat, tburn);
 }

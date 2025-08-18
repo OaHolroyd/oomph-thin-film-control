@@ -22,18 +22,18 @@ static double **LQR_K; /* control operator */
 /* compute the control matrix in the Benney case */
 void lqr_benney_compute_K(double **lqr_k) {
   /* Jacobian */
-  double **J = malloc_f2d(N, N);
-  benney_jacobian(J);
+  double **A = malloc_f2d(N, N);
+  benney_jacobian(A);
 
   /* actuator matrix */
-  double **Psi = malloc_f2d(N, M);
-  benney_actuator(Psi);
+  double **B = malloc_f2d(N, M);
+  benney_actuator(B);
 
   /* control matrix */
-  dlqr(J, Psi, DX*MU, 1-MU, N, M, lqr_k);
+  dlqr(A, B, sqrt(DX) * MU, 1.0 / sqrt(DX), N, M, lqr_k);
 
-  free_2d(J);
-  free_2d(Psi);
+  free_2d(A);
+  free_2d(B);
 }
 
 /* compute the control matrix in the weighted-residuals case */
@@ -47,7 +47,7 @@ void lqr_wr_compute_K(double **lqr_k) {
   wr_actuator(B);
 
   /* full control matrix */
-  dlqr(A, B, DX*MU, 1-MU, 2*N, M, lqr_k);
+  dlqr(A, B, sqrt(DX) * MU, 1.0 / sqrt(DX), 2 * N, M, lqr_k);
 
   free_2d(A);
   free_2d(B);
@@ -81,7 +81,11 @@ void lqr_free(void) {
 }
 
 /* [REQUIRED] steps the system forward in time given the interfacial height */
-void lqr_step(double dt, double *h, double *q) {
+void lqr_step(double dt, double *h, double *q, int control_on) {
+  if (!control_on) {
+    return;
+  }
+
   /* f = K * (h-1) */
   for (int i = 0; i < M; i++) {
     Amag[i] = 0.0;
@@ -102,6 +106,10 @@ void lqr_step(double dt, double *h, double *q) {
 double lqr_estimator(double x) {
 
   return 0.0;
+}
+
+double lqr_estimator_flux(double x) {
+  return 2.0/3.0;
 }
 
 /* [REQUIRED] outputs the internal matrices */

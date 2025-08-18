@@ -16,7 +16,8 @@ do for [i=0:13000] {
     fout = sprintf("output/plot_1d_%d.png",i)
     set output fout
     plot fin using 1:4 w l t "control" lt rgb "#FF0000", \
-         fin using 1:($2 - 1) w l t "interface" lt rgb "#0000FF"
+         fin using 1:($2 - 1) w l t "interface" lt rgb "#0000FF", \
+         fin using 1:($5 - 1) w l t "estimator" lt rgb "#00FF00"
   }
 }
 set output
@@ -34,7 +35,8 @@ do for [i=0:13000] {
     set title x
 
     plot fin using 1:4 w l t "control" lt rgb "#FF0000", \
-         fin using 1:($2 - 1) w l t "interface" lt rgb "#0000FF"
+         fin using 1:($2 - 1) w l t "interface" lt rgb "#0000FF", \
+         fin using 1:($5 - 1) w l t "estimator" lt rgb "#00FF00"
   }
 }
 set output

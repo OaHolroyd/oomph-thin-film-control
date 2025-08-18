@@ -15,10 +15,10 @@ using namespace oomph;
 //The global physical variables
 namespace Global_Physical_Variables {
   /// The length of the domain in the x direction (streamwise)
-  double Lx = 32.0;
+  double Lx = 30.0;
 
   /// Reynolds number, based on the surface velocity of a flat film (Nusselt velocity)
-  double Re = 15.0;
+  double Re = 8.0;
 
   /// The Capillary number
   double Ca = 0.05;
@@ -27,16 +27,13 @@ namespace Global_Physical_Variables {
   double Theta = M_PI / 4.0;
 
   /// Time to run before the control is turned on
-  double tburn = 200.0;
-
-  /// Time step during burn
-  double dtburn = 0.1;
+  double tburn = 100.0;
 
   /// Time to run with control turned on
-  double tcontrol = 100.0;
+  double tend = 200.0;
 
   /// Time step during burn
-  double dtcontrol = 0.1;
+  double dt = 0.1;
 
   /// The number of elements in the x direction
   unsigned nx = 100;
@@ -45,7 +42,7 @@ namespace Global_Physical_Variables {
   unsigned ny = 6;
 
   /// The number of points in th control system in the x direction
-  unsigned nx_control = 80;
+  unsigned nx_control = 100;
 
   /// The Vector direction of gravity (x/y/z, ie streamwise, spanwise, normal)
   Vector<double> G = {2.0, -2.0 / tan(Theta)}; // x is streamwise, y is spanwise, z is normal

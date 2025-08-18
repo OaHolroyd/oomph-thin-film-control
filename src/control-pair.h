@@ -20,7 +20,14 @@ void pair_set(void) {
 void pair_free(void) {}
 
 /* [REQUIRED] steps the system forward in time given the interfacial height */
-void pair_step(double dt, double *h, double *q) {
+void pair_step(double dt, double *h, double *q, int control_on) {
+  if (!control_on) {
+    for (int i = 0; i < M; i++) {
+      Amag[i] = 0.0;
+    } // i end
+    return;
+  }
+
   for (int i = 0; i < M; i++) {
     Amag[i] = ALPHA*(interp(Aloc[i]-DEL, h) - 1.0);
   } // i end
@@ -28,8 +35,11 @@ void pair_step(double dt, double *h, double *q) {
 
 /* [REQUIRED] returns the estimator as a function of x */
 double pair_estimator(double x) {
+  return 1.0;
+}
 
-  return 0.0;
+double pair_estimator_flux(double x) {
+  return 2.0/3.0;
 }
 
 /* [REQUIRED] outputs the internal matrices */

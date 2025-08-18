@@ -41,7 +41,7 @@ void static_benney_compute_KPHI(double **static_kphi) {
 
   /* full control matrix (note alternative cost preferences) */
   double **K_lqr = malloc_f2d(M, N);
-  dlqr(J, Psi, MU, 1-MU, N, M, K_lqr);
+  dlqr(J, Psi, MU, 1.0, N, M, K_lqr);
 
 
   /* initial guess for restricted matrix */
@@ -686,20 +686,26 @@ void static_free(void) {
 }
 
 /* [REQUIRED] steps the system forward in time given the interfacial height */
-void static_step(double dt, double *h, double *q) {
+void static_step(double dt, double *h, double *q, int control_on) {
   /* f = K * Phi * (h-1) */
   for (int i = 0; i < M; i++) {
     Amag[i] = 0.0;
-    for (int j = 0; j < N; j++) {
-      Amag[i] += STATIC_KPHI[i][j] * (interp(ITOX(j), h) - 1.0);
-    } // j end
+
+    if (control_on) {
+      for (int j = 0; j < N; j++) {
+        Amag[i] += STATIC_KPHI[i][j] * (interp(ITOX(j), h) - 1.0);
+      } // j end
+    }
   } // i end
 }
 
 /* [REQUIRED] returns the estimator as a function of x */
 double static_estimator(double x) {
+  return 1.0;
+}
 
-  return 0.0;
+double static_estimator_flux(double x) {
+  return 2.0/3.0;
 }
 
 /* [REQUIRED] outputs the internal matrices */

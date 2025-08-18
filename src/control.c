@@ -10,6 +10,7 @@ extern "C" {
 #include "control-lqr.h"
 #include "control-static.h"
 #include "control-dynamic.h"
+#include "control-estimator.h"
 
 #include "c-utils.h"
 
@@ -34,10 +35,13 @@ void (*control_matrix)(double **CM);
 
 /* steps the specific control system forward in time given the interfacial
    height */
-void (*control_step)(double dt, double *h, double *q);
+void (*control_step)(double dt, double *h, double *q, int control_on);
 
 /* returns the estimator as a function of x */
 double (*estimator)(double x);
+
+/* returns the estimator of the flux as a function of x */
+double (*estimator_flux)(double x);
 
 
 /* ========================================================================== */
@@ -85,37 +89,56 @@ void control_set(control_t ct, rom_t rt, int m, int p, double w, double alpha, d
   CT = ct;
   switch (CT) {
     case PAIR:
+      printf("PAIR\n");
       s_set = &pair_set;
       s_free = &pair_free;
       control_step = &pair_step;
       estimator = &pair_estimator;
+      estimator_flux = &pair_estimator_flux;
       s_output = &pair_output;
       control_matrix = &pair_matrix;
       break;
     case LQR:
+      printf("LQR\n");
       s_set = &lqr_set;
       s_free = &lqr_free;
       control_step = &lqr_step;
       estimator = &lqr_estimator;
+      estimator_flux = &lqr_estimator_flux;
       s_output = &lqr_output;
       control_matrix = &lqr_matrix;
       break;
     case STATIC:
+      printf("STATIC\n");
       s_set = &static_set;
       s_free = &static_free;
       control_step = &static_step;
       estimator = &static_estimator;
+      estimator_flux = &static_estimator_flux;
       s_output = &static_output;
       control_matrix = &static_matrix;
       break;
     case DYNAMIC:
+      printf("DYNAMIC\n");
       s_set = &dynamic_set;
       s_free = &dynamic_free;
       control_step = &dynamic_step;
       estimator = &dynamic_estimator;
+      estimator_flux = &dynamic_estimator_flux;
       s_output = &dynamic_output;
       control_matrix = NULL;
       break;
+    case ESTIMATOR:
+      printf("ESTIMATOR\n");
+      s_set = &est_set;
+      s_free = &est_free;
+      control_step = &est_step;
+      estimator = &est_estimator;
+      estimator_flux = &est_estimator_flux;
+      s_output = &est_output;
+      control_matrix = NULL;
+      break;
+
     default :
       ABORT("invalid control type %d", ct);
   }
