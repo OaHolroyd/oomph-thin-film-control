@@ -31,7 +31,7 @@ else
 	CXX=mpic++
 	LD=$(CXX)
 
-	OOMPHLIB=/storage/maths/mauvvq/oomph-lib
+	OOMPHLIB=/path/to/oomph-lib
 
 	WARNINGS=-Wall -Wextra -pedantic -Wno-implicit-function-declaration -Wno-unused-parameter
     CFLAGS=-O3 -Wall
